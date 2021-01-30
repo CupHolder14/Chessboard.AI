@@ -1,1 +1,3 @@
-Record=TopLevelDocument|FileName=LED_Array.SchDoc
+Record=TopLevelDocument|FileName=Power_Supply_And_Connections.SchDoc
+Record=SheetSymbol|SourceDocument=Power_Supply_And_Connections.SchDoc|Designator=Designator|SchDesignator=Designator|FileName=Sensor_Array_Large.SchDoc|SymbolType=Normal|RawFileName=Sensor_Array_Large.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=Power_Supply_And_Connections.SchDoc|Designator=Designator|SchDesignator=Designator|FileName=LED_Array_Large.SchDoc|SymbolType=Normal|RawFileName=LED_Array_Large.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
