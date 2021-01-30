@@ -1,0 +1,27 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model WP154A4SEJ3VBDZGW_CA
+#/907511/361417/2.48/4/4/LED
+DEF WP154A4SEJ3VBDZGW_CA LED 0 30 Y Y 1 F N
+F0 "LED" 1850 300 50 H V L CNN
+F1 "WP154A4SEJ3VBDZGW_CA" 1850 200 50 H V L CNN
+F2 "L-154A4SUREQBFZGEC" 1850 100 50 H I L CNN
+F3 "http://www.kingbrightusa.com/images/catalog/SPEC/WP154A4SEJ3VBDZGW-CA.pdf" 1850 0 50 H I L CNN
+F4 "Standard LEDs - Through Hole 5MM RGB LED" 1850 -100 50 H I L CNN "Description"
+F5 "" 1850 -200 50 H I L CNN "Height"
+F6 "Kingbright" 1850 -300 50 H I L CNN "Manufacturer_Name"
+F7 "WP154A4SEJ3VBDZGW/CA" 1850 -400 50 H I L CNN "Manufacturer_Part_Number"
+F8 "604-WP154A43VBDZGWCA" 1850 -500 50 H I L CNN "Mouser Part Number"
+F9 "https://www.mouser.co.uk/ProductDetail/Kingbright/WP154A4SEJ3VBDZGW-CA/?qs=YCa%2FAAYMW01xRqZww6UuiQ%3D%3D" 1850 -600 50 H I L CNN "Mouser Price/Stock"
+F10 "WP154A4SEJ3VBDZGW/CA" 1850 -700 50 H I L CNN "Arrow Part Number"
+F11 "https://www.arrow.com/en/products/wp154a4sej3vbdzgwca/kingbright" 1850 -800 50 H I L CNN "Arrow Price/Stock"
+DRAW
+X RED_CATHODE 1 2000 -100 200 L 50 50 0 0 P
+X COMMON_ANODE 2 0 -100 200 R 50 50 0 0 P
+X BLUE_CATHODE 3 2000 0 200 L 50 50 0 0 P
+X GREEN_CATHODE 4 0 0 200 R 50 50 0 0 P
+P 5 0 1 6 200 100 1800 100 1800 -200 200 -200 200 100 N
+ENDDRAW
+ENDDEF
+#
+#End Library

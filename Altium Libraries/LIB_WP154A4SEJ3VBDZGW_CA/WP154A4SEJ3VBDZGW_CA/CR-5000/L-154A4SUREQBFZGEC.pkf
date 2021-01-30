@@ -1,0 +1,10 @@
+(unit MM)
+
+(package "L-154A4SUREQBFZGEC"
+    (type UNDEF)
+    (uver 2)
+    (mountForm default
+        (footprintRef "L-154A4SUREQBFZGEC")
+        (spec "default")
+    )
+)

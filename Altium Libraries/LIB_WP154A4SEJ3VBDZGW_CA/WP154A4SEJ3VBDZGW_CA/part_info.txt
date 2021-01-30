@@ -1,0 +1,9 @@
+Manufacturer=Kingbright
+PartNumber=WP154A4SEJ3VBDZGW/CA
+PartCategory=LED
+PackageCategory=Other
+PinCount=4
+Version=1.1
+Released=2018-04-14 16:07:47
+Downloaded=2021-01-30 17:56:29
+3D=N

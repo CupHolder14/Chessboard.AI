@@ -1,0 +1,11 @@
+FILE_TYPE = MULTI_PHYS_TABLE;
+
+PART 'WP154A4SEJ3VBDZGW_CA'
+CLASS = DISCRETE
+{========================================================================================}
+:"MANUFACTURER_NAME", "MANUFACTURER_PART_NUMBER"= "PART_NUMBER", "JEDEC_TYPE", "PACK_TYPE", "MOUSER_PART_NUMBER", "MOUSER_PRICE/STOCK", "ARROW_PART_NUMBER", "ARROW_PRICE/STOCK", "DESCRIPTION", "DATASHEET";
+{========================================================================================}
+ "Kingbright", "WP154A4SEJ3VBDZGW/CA" (!) = "", "L-154A4SUREQBFZGEC", "Other", "604-WP154A43VBDZGWCA", "https://www.mouser.co.uk/ProductDetail/Kingbright/WP154A4SEJ3VBDZGW-CA/?qs=YCa%2FAAYMW01xRqZww6UuiQ%3D%3D", "WP154A4SEJ3VBDZGW/CA", "https://www.arrow.com/en/products/wp154a4sej3vbdzgwca/kingbright", "Standard LEDs - Through Hole 5MM RGB LED", "http://www.kingbrightusa.com/images/catalog/SPEC/WP154A4SEJ3VBDZGW-CA.pdf"
+END_PART
+
+END.

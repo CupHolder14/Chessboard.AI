@@ -1,0 +1,17 @@
+.WP154A4SEJ3VBDZGW_CA :1 ;Standard LEDs - Through Hole 5MM RGB LED
+L-154A4SUREQBFZGEC
+*STM LED
+*NGS
+*PLB 1="RED CATHODE" 2="COMMON ANODE" 3="BLUE CATHODE" 4="GREEN CATHODE"
+*MXP 4
+*DFN WP154A4SEJ3VBDZGW_CA
+~!Manufacturer_Name (Kingbright)
+~!Manufacturer_Part_Number (WP154A4SEJ3VBDZGW/CA)
+~!Mouser Part Number (604-WP154A43VBDZGWCA)
+~!Link Mouser Price/Stock (https://www.mouser.co.uk/ProductDetail/Kingbright/WP154A4SEJ3VBDZGW-CA/?qs=YCa%2FAAYMW01xRqZww6UuiQ%3D%3D)
+~!Arrow Part Number (WP154A4SEJ3VBDZGW/CA)
+~!Link Arrow Price/Stock (https://www.arrow.com/en/products/wp154a4sej3vbdzgwca/kingbright)
+~!Link Datasheet (http://www.kingbrightusa.com/images/catalog/SPEC/WP154A4SEJ3VBDZGW-CA.pdf)
+~!Height (-)
+WP154A4SEJ3VBDZGW_CA
+1.1!U 2.1!U 3.1!U 4.1!U 

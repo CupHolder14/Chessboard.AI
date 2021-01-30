@@ -1,0 +1,100 @@
+;Proteus Design Interchange Format
+(PDIF
+ (vendor "SamacSys Limited")
+ (version 1 0)
+ (library
+  (part "WP154A4SEJ3VBDZGW_CA"
+   (description "Standard LEDs - Through Hole 5MM RGB LED")
+   (family "DIO")
+   (package "L-154A4SUREQBFZGEC")
+   (attribute "Datasheet Link" "http://www.kingbrightusa.com/images/catalog/SPEC/WP154A4SEJ3VBDZGW-CA.pdf")
+   (attribute "Manufacturer_Name" "Kingbright")
+   (attribute "Manufacturer_Part_Number" "WP154A4SEJ3VBDZGW/CA")
+   (attribute "Mouser Part Number" "604-WP154A43VBDZGWCA")
+   (attribute "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/Kingbright/WP154A4SEJ3VBDZGW-CA/?qs=YCa%2FAAYMW01xRqZww6UuiQ%3D%3D")
+   (attribute "Arrow Part Number" "WP154A4SEJ3VBDZGW/CA")
+   (attribute "Arrow Price/Stock" "https://www.arrow.com/en/products/wp154a4sej3vbdzgwca/kingbright")
+   (gate
+    (symbol "WP154A4SEJ3VBDZGW_CA")
+    (pin "RED_CATHODE" 1 PS)
+    (pin "COMMON_ANODE" 2 PS)
+    (pin "BLUE_CATHODE" 3 PS)
+    (pin "GREEN_CATHODE" 4 PS)
+   )
+  )
+  (symbol "WP154A4SEJ3VBDZGW_CA"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 200 100) (pt 1800 100) (pt 1800 -200) (pt 200 -200) (pt 200 100) (closed))
+   )
+   (terminal
+    (body (symbol "PIN") (pt 2000 -100) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -100) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2000 0) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 0) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+  )
+  (symbol "PIN"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 0 0) (pt 200 0))))
+  (symbol "PINSHORT"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 0 0) (pt 100 0))))
+  (package "L-154A4SUREQBFZGEC"
+   (units MM)
+   (layer TASM
+    (graphic
+     (stroke 0.2)
+     (circle
+      (pt 2.95 0) (pt -2.95 0)
+     )
+    )
+   )
+   (layer TSLK
+    (graphic
+     (stroke 0.2)
+     (circle
+      (pt 2.95 0) (pt -2.95 0)
+     )
+    )
+   )
+   (layer TSLK
+    (graphic
+     (stroke 0.2)
+     (circle
+      (pt 0.789 -3.323) (pt 0.871 -3.323)
+     )
+    )
+   )
+   (leg 1 (pt 0.5 -1.905) (padstack 0))
+   (leg 2 (pt -0.5 -0.635) (padstack 0))
+   (leg 3 (pt 0.5 0.635) (padstack 0))
+   (leg 4 (pt -0.5 1.905) (padstack 0))
+   (padstack 0
+    (hole 0.889)
+    (plated true)
+    (pad (layer TCOP) (round 1.4))
+    (pad (layer INNER) (round 1.4))
+    (pad (layer BCOP) (round 1.4))
+   )
+  )
+ )
+)
