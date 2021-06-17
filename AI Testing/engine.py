@@ -132,18 +132,13 @@ class Game():
             self.Player1Move = not self.Player1Move #Switch back the turn
             self.undo_move() #Undo the move that we just made
 
-        #If the player is in check, print the status (for testing purposes).
-        if self.in_check(): 
-            print('Check!')
 
         #If there are no moves to be made, then the player is in either checkmate or stalemate.
         if len(moves) == 0:
             if self.in_check(): #If in check and there are no other moves to make, it's checkmate.
                 self.checkmate = True
-                print('checkmate!')
             else: #If not in check and there are no other moves to make, it's stalemate.
                 self.stalemate = True 
-                print('stalemate!')
         else: 
             self.checkmate = False
             self.stalemate = False
@@ -292,8 +287,6 @@ class Game():
                 elif end_piece[0] == enemy_color:
                     moves.append(Move((r,c),(end_row,end_col),self.boardstate)) #if landing on enemy piece, append move.
         
-
-
 
     '''Define how castling works'''
     def getCastleMoves(self,r,c,moves):
