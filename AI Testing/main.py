@@ -76,21 +76,8 @@ def main():
                                 game.make_move(legal_moves[i]) #If it's a legal move, make it!
                                 #print(selected_tile)
 
-                                '''
-                                This work is already done in engine.py, but we need to repeat it for our "pinging" of whether a check or checkmate happens.
-                                This is because whenever we call legal_move_generation, each move is acted upon, which triggers random "check!" and "checkmate!" pings. we want it to only
-                                ping those things after the final move is made.
-                                '''
                                 if game.in_check(): 
-                                    print('Check!')
-                                moves = game.all_moves_generation() #First we generate all possible moves.
-                                if len(moves) == 0:
-                                    if game.in_check(): #If in check and there are no other moves to make, it's checkmate.
-                                        game.checkmate = True
-                                        print('checkmate!')
-                                    else: #If not in check and there are no other moves to make, it's stalemate.
-                                        game.stalemate = True 
-                                        print('stalemate!')
+                                    print('Check!')                                
 
                                 selected_tile = () #reset user clicks if it was a legal move
                                 tile_sequence = [] #only reset if it was a legal move
@@ -121,30 +108,14 @@ def main():
         if not PlayerTurn and not GAMEOVER:
             AIMove = AI.FindBestMoveMinMax(game, legal_moves)
             if AIMove is None:
-                AIMove = AI.findRandomMove(game, legal_moves)
+                AIMove = AI.findRandomMove(legal_moves)
             game.make_move(AIMove)
 
-
-            '''
-            This work is already done in engine.py, but we need to repeat it for our "pinging" of whether a check or checkmate happens.
-            This is because whenever we call legal_move_generation, each move is acted upon, which triggers random "check!" and "checkmate!" pings. we want it to only
-            ping those things after the final move is made.
-            '''
             if game.in_check(): 
                 print('Check!')
-            moves = game.all_moves_generation() #First we generate all possible moves.
-            if len(moves) == 0:
-                if game.in_check(): #If in check and there are no other moves to make, it's checkmate.
-                    game.checkmate = True
-                    print('checkmate!')
-                else: #If not in check and there are no other moves to make, it's stalemate.
-                    game.stalemate = True 
-                    print('stalemate!')
 
             get_new_legal_moves = True
             #print(AIMove)
-
-
 
         #If at any point a legal move is made, we must regenerate a new set of legal moves to be played.
         if get_new_legal_moves: 

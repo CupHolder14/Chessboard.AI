@@ -132,13 +132,14 @@ class Game():
             self.Player1Move = not self.Player1Move #Switch back the turn
             self.undo_move() #Undo the move that we just made
 
-
         #If there are no moves to be made, then the player is in either checkmate or stalemate.
         if len(moves) == 0:
             if self.in_check(): #If in check and there are no other moves to make, it's checkmate.
                 self.checkmate = True
+                print('Checkmate!')
             else: #If not in check and there are no other moves to make, it's stalemate.
-                self.stalemate = True 
+                self.stalemate = True
+                print('Stalemate!') 
         else: 
             self.checkmate = False
             self.stalemate = False

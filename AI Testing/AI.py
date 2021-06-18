@@ -60,39 +60,66 @@ Recursive form of the minmax algorithm, can evaluate at any value of depth
 def FindBestMoveMinMax(game, legal_moves): #this is a helper function, it is responsible for calling the initial recursive value to nextMove, and then returning the result
     global nextMove
     nextMove = None
-    MinMaxMove(game, legal_moves, DEPTH, game.Player1Move)
+    MinMaxMove(game, legal_moves, DEPTH, 1 if game.Player1Move else -1)
     return nextMove
 
-def MinMaxMove(game, legal_moves, depth, Player1Move): #this incorporates recursion (depth or number of layers)
-    global nextMove #create a global variable 
-    if depth == 0:
-        return ScoreBoardstate(game)
-    random.shuffle(legal_moves) #Might be needed, not sure where it goes yet though      
-    if Player1Move:
-        MaxScore = -checkmateValue
-        for move in legal_moves:
-            game.make_move(move)
-            NewMoves = game.legal_move_generation()
-            score = MinMaxMove(game, NewMoves, depth - 1, not Player1Move) #Enter the next layer
-            if score > MaxScore:
-                MaxScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            game.undo_move()
-        return MaxScore
 
-    else: #black's move
-        MinScore = checkmateValue
-        for move in legal_moves:
-            game.make_move(move)
-            NewMoves = game.legal_move_generation()
-            score = MinMaxMove(game, NewMoves, depth - 1, Player1Move)
-            if score < MinScore:
-                MinScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            game.undo_move()
-        return MinScore
+'''
+Need to implement alpha beta pruning next
+'''
+def MinMaxMove(game, legal_moves, depth, Multiplier): #this incorporates recursion (depth or number of layers)
+    global nextMove
+    if depth == 0:
+        return Multiplier*ScoreBoardstate(game)
+    random.shuffle(legal_moves) #Might be needed, not sure where it goes yet though      
+    MaxScore = -checkmateValue
+    for move in legal_moves:
+        game.make_move(move)
+        NewMoves = game.legal_move_generation()
+        score = -MinMaxMove(game, NewMoves, depth - 1, -Multiplier) #Enter the next layer
+        if score > MaxScore:
+            MaxScore = score
+            if depth == DEPTH:
+                nextMove = move
+        game.undo_move()
+    return MaxScore
+
+
+
+'''
+More lines to do it
+'''
+
+# def MinMaxMove(game, legal_moves, depth, Player1Move): #this incorporates recursion (depth or number of layers)
+#     global nextMove #create a global variable 
+#     if depth == 0:
+#         return ScoreBoardstate(game)
+#     random.shuffle(legal_moves) #Might be needed, not sure where it goes yet though      
+#     if Player1Move:
+#         MaxScore = -checkmateValue
+#         for move in legal_moves:
+#             game.make_move(move)
+#             NewMoves = game.legal_move_generation()
+#             score = MinMaxMove(game, NewMoves, depth - 1, not Player1Move) #Enter the next layer
+#             if score > MaxScore:
+#                 MaxScore = score
+#                 if depth == DEPTH:
+#                     nextMove = move
+#             game.undo_move()
+#         return MaxScore
+
+#     else: #black's move
+#         MinScore = checkmateValue
+#         for move in legal_moves:
+#             game.make_move(move)
+#             NewMoves = game.legal_move_generation()
+#             score = MinMaxMove(game, NewMoves, depth - 1, Player1Move)
+#             if score < MinScore:
+#                 MinScore = score
+#                 if depth == DEPTH:
+#                     nextMove = move
+#             game.undo_move()
+#         return MinScore
 
 def ScoreBoardstate(game):
     '''
