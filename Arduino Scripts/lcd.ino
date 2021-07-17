@@ -1,7 +1,3 @@
-/* 
- * Optimization idea: convert string arrays to one string using /n
- */
-
 /* Libraries */
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -15,6 +11,8 @@ int upButton = 7;
 int downButton = 8;
 int acceptButton = 12;
 int denyButton = 13;
+int WhiteButton = 7;
+int BlackButton = 8;
 
 // menu variables
 int currentMenu;
@@ -25,12 +23,13 @@ int maxIndex;
 String mainMenu[] = {"Play", "Settings"};                    // 0
 String playMenu[] = {"Vs. AI", "Vs. Player"};               // 1
 String settingsMenu[] = {"Timer Length", "AI Difficulty"}; // 2
-String gameMenu[] = {"         white black", "Time     00:00 00:00", "Last Move  kd4   kd4"};                    // 3
+String ChangeSideMenu[] = {"White", "Black"};             // 3
 String pauseMenu[] = {"Resume", "Quit"};                 // 4
 String AcceptMenu[] = {"Yes","No"};                     // 5
 String TimerLengthMenu[] = {"    < 10 mins >", "Confirm"};        // 6
 String AiDifficultyMenu[] = {"    < Easy >","Confirm"};         // 7
-String TestMenu[] = {"Test"};
+
+
 
 /* Classes */
 // Data to be received
@@ -73,7 +72,10 @@ class Settings{
     int Secs_White;
     int Secs_Black;
     String AiDifficulty;
+    bool AgainstAI;
     bool IsWhitesTurn;
+    bool IsWhitePlayer;
+    bool IsPaused;
     unsigned long PrevTime;
     InData Data_IN;
     OutData Data_OUT;
@@ -85,6 +87,7 @@ class Settings{
       this->AiDifficulty = "Easy";
       this->PrevTime = 0;
       this->IsWhitesTurn = true;
+      this->IsPaused = false;
     }
 
     void IncreaseTimer(String* TimerLengthMenu){
@@ -116,6 +119,42 @@ class Settings{
       AiDifficultyMenu[0] = "    < " + AiDifficulty + " >";
     }
 
+    void PauseScreen(){
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Game Paused");
+      lcd.setCursor(1,1);
+      lcd.print("Resume");
+      lcd.setCursor(1,2);
+      lcd.print("Quit");
+      lcd.setCursor(0,1);
+      lcd.print(">");
+    }
+
+    void ResumeScreen(){
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("In Game");
+      lcd.setCursor(9,1);
+      lcd.print("White Black");
+      lcd.setCursor(0,2);
+      lcd.print("Time");
+      lcd.setCursor(9,2);
+      if(InfLength){
+        lcd.print("--:-- --:--");
+      }
+      else{
+        UpdateClock(Mins_White, Secs_White, true);
+        if(AgainstAI){
+          lcd.setCursor(15,2);
+          lcd.print("--:--");
+        }
+        else{
+          UpdateClock(Mins_Black, Secs_Black, false);
+        }
+      }
+    }
+
     void StartGame(bool againstAI){
       // To start the game, we need to display the in game screen (timer, last move, etc.)
       // We need to initalize the clock by calculating the minutes, and seconds
@@ -132,7 +171,7 @@ class Settings{
       lcd.print("Time");
       lcd.setCursor(9,2);
       if(InfLength){
-        lcd.print("--:--");
+        lcd.print("--:-- --:--");
       }
       else{
         Mins_White = TimerLength;
@@ -140,7 +179,12 @@ class Settings{
         Secs_White = 0;
         Secs_Black = 0;
         String mins = TimerLength >= 10 ? String(TimerLength) : "0" + String(TimerLength);
-        lcd.print(mins + ":" + "00 " + mins + ":" + "00");
+        if(AgainstAI){
+          lcd.print(mins + ":" + "00 " + "--" + ":" + "--");
+        }
+        else{
+          lcd.print(mins + ":" + "00 " + mins + ":" + "00");
+        }
       }
       lcd.setCursor(0,3);
       lcd.print("Last Move");
@@ -164,7 +208,6 @@ class Settings{
     }
 
     void Tick(){
-      Serial.println("tick");
       if(IsWhitesTurn){
         if(Secs_White == 0){
           if(Mins_White != 0){
@@ -175,6 +218,8 @@ class Settings{
           else{
             // Timer Depleted for white
             GameInProgress = false;
+            lcd.print("                    ");
+            lcd.print("Game Over - Black Wins");
             Data_IN.SendData("White Lost");
           }
         }
@@ -184,6 +229,9 @@ class Settings{
         }
       }
       else{
+        if(AgainstAI){
+          return;
+        }
         if(Secs_Black == 0){
           if(Mins_Black != 0){
             Mins_Black--;
@@ -193,6 +241,10 @@ class Settings{
           else{
             // Timer Depleted for black
             GameInProgress = false;
+            lcd.setCursor(0,0);
+            lcd.print("                    ");
+            lcd.setCursor(0,0);
+            lcd.print("Game Over - White Wins");
             Data_IN.SendData("Black Lost");
           }
         }
@@ -238,7 +290,14 @@ void setup() {
  * 
  */
 void loop() {
-  if(settings.GameInProgress){
+  if(settings.GameInProgress && !settings.IsPaused){
+    if(!digitalRead(denyButton)){
+        PrintLog("Paused");
+        settings.IsPaused = true;
+        menuIndex = 1;
+        settings.PauseScreen();
+        while(!digitalRead(denyButton));
+    }
     if(!settings.InfLength){
       unsigned long currentTime = millis();
       if(currentTime - settings.PrevTime >= 1000){
@@ -246,17 +305,57 @@ void loop() {
         settings.Tick();
       }
     }
+    if(!digitalRead(WhiteButton) && settings.IsWhitesTurn){
+      settings.IsWhitesTurn = !settings.IsWhitesTurn;
+      while(!digitalRead(WhiteButton));
+    }
+    if(!digitalRead(BlackButton) && !settings.IsWhitesTurn){
+      settings.IsWhitesTurn = !settings.IsWhitesTurn;
+      while(!digitalRead(WhiteButton));
+    }
     // HELEN CODE
+  }
+  else if(settings.GameInProgress && settings.IsPaused){
+    if(!digitalRead(upButton)){
+      if(menuIndex != 1){
+        menuIndex--;
+        RefreshScreen("up");
+      }
+      while(!digitalRead(upButton)); 
+    }
+    if(!digitalRead(downButton)){
+      if(menuIndex != 3 && menuIndex != maxIndex){
+        menuIndex++;
+        RefreshScreen("down"); 
+      }
+      while(!digitalRead(downButton));
+    }
+    if(!digitalRead(acceptButton)){
+      switch(menuIndex){
+        case 1:
+          settings.IsPaused = false;
+          settings.ResumeScreen();
+          break;
+        case 2:
+          menuIndex = 1;
+          maxIndex = 2;
+          currentMenu = 0;
+          settings.GameInProgress = false;
+          settings.IsPaused = false;
+          WriteToScreen("Classical Chess", mainMenu);
+          break;
+      }
+    }
   }
   else{
     if(!digitalRead(upButton)){
-    PrintLog("upButton");
-    if(menuIndex != 1){
-      menuIndex--;
-      RefreshScreen("up");
+      PrintLog("upButton");
+      if(menuIndex != 1){
+        menuIndex--;
+        RefreshScreen("up");
+      }
+      while(!digitalRead(upButton)); 
     }
-    while(!digitalRead(upButton)); 
-  }
   if(!digitalRead(downButton)){
     PrintLog("downButton");
     if(menuIndex != 3 && menuIndex != maxIndex){
@@ -289,14 +388,14 @@ void loop() {
           case 1:
              currentMenu = 3;
              menuIndex = 1;
-             outdata.BlackPlayer = false;
-             settings.StartGame(true);
+             settings.AgainstAI = true;
+             settings.StartGame(settings.AgainstAI);
              break;
           case 2:
             currentMenu = 3;
             menuIndex = 1;
-            outdata.BlackPlayer = true;
-            settings.StartGame(false);
+            settings.AgainstAI = false;
+            settings.StartGame(settings.AgainstAI);
             break;
         }
         break;
