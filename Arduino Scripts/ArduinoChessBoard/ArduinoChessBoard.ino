@@ -39,8 +39,8 @@ String AiDifficultyMenu[] = {"    < Easy >", "Confirm"};              // 7
 
 
 // Board State Variables
-int last_sensor_board_state[8][8] = 
-  {{1, 1, 1, 1, 1, 1, 1, 1},
+int last_sensor_board_state[8][8] =
+{ {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -301,7 +301,7 @@ void setup() {
   pinMode(denyButton, INPUT_PULLUP);
   pinMode(upButton, INPUT_PULLUP);
   pinMode(downButton, INPUT_PULLUP);
-  
+
   // Board State Pins
   for (int thisPin_sensor = 0; thisPin_sensor < 8; thisPin_sensor++) {
     // initialize the output/input pins for sensor matrix:                            // set sensor output pins
@@ -356,9 +356,9 @@ void loop() {
     receive_data;
 
     turn_on_LEDs;
-  
+
     read_current_board_state;
-  
+
     compare_board_states;
   }
   else if (settings.GameInProgress && settings.IsPaused) {
@@ -554,9 +554,16 @@ void PrintLog(String log) {
   }
 }
 
+void ChangeLEDState(int *Array, bool state, int count = 8) {
+  for (int i = 0; i <= count; i++) {
+    digitalWrite(Array[i], state);
+  }
+}
+
 void read_current_board_state() {
   // iterate over the rows:
   for (int row_now = 0; row_now < 8; row_now++) {
+    // ChangeLEDState(sensor_rows_pins, false);
     digitalWrite(sensor_rows_pins[0], LOW);                 // set all rows to low
     digitalWrite(sensor_rows_pins[1], LOW);
     digitalWrite(sensor_rows_pins[2], LOW);
@@ -655,6 +662,7 @@ void receive_data() {                                     // if statements for b
 
 void turn_on_LEDs() {
   for (int row_LED = 0; row_LED < 8; row_LED++) {     // iterate over LED rows to check which LEDs need to be turned on
+    // ChangeLEDState(sensor_rows_pins, true);
     digitalWrite(LED_row_pins[0], HIGH);               // turn all LEDs off
     digitalWrite(LED_row_pins[1], HIGH);
     digitalWrite(LED_row_pins[2], HIGH);
@@ -670,6 +678,7 @@ void turn_on_LEDs() {
 
 
     for (int col_LED = 0; col_LED < 8; col_LED++) {
+      // ChangeLEDState(LED_col_R_pins, false);
       digitalWrite(LED_col_R_pins[0], LOW);               // turn all RED LEDs off
       digitalWrite(LED_col_R_pins[1], LOW);
       digitalWrite(LED_col_R_pins[2], LOW);
@@ -679,6 +688,7 @@ void turn_on_LEDs() {
       digitalWrite(LED_col_R_pins[6], LOW);
       digitalWrite(LED_col_R_pins[7], LOW);
 
+      // ChangeLEDState(LED_col_G_pins, false);
       digitalWrite(LED_col_G_pins[0], LOW);               // turn all GREEN LEDs off
       digitalWrite(LED_col_G_pins[1], LOW);
       digitalWrite(LED_col_G_pins[2], LOW);
