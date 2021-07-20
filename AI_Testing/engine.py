@@ -33,7 +33,6 @@ class Game():
         self.white_king_loc = (7,4) #We want to keep track of where the kings are at at all times, in order to anticipate and register any checks/checkmates
         self.black_king_loc = (0,4)
 
-
         self.currentCastlingRight = CastleRights(True,True,True,True)
         self.CastlingRightsLog = [CastleRights(self.currentCastlingRight.wks, self.currentCastlingRight.bks, self.currentCastlingRight.wqs, self.currentCastlingRight.bqs)]
 
@@ -143,7 +142,6 @@ class Game():
         else: 
             self.checkmate = False
             self.stalemate = False
-
 
 
         if self.Player1Move:
@@ -345,19 +343,27 @@ class Move():
             return self.moveID == other.moveID
         return False
 
+
+
     '''
     Note: This section deals with rankfile notation (Ex. MOVE: a2a3 (move piece on a2 to a3.)). This is temporary and will not appear in the final project.
     Further coordination must be done with the Board State Decoder before this can be completed properly.
     '''
     #maps keys to values (RankFile notation)
     #key : value
-    ranksToRows = {"1":7, "2":6, "3":5,"4":4,"5":3,"6":2,"7":1,"8":0}
+    ranksToRows = {"0":0, "1":1, "2":2,"3":3,"4":4,"5":5,"6":6,"7":7}
     rowToRanks = {v: k for k,v in ranksToRows.items()} #quick way to reverse the pairs for ranksToRows
-    filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5,"g":6,"h":7}
+    filesToCols = {"0,":0,"1,":1,"2,":2,"3,":3,"4,":4,"5,":5,"6,":6,"7,":7}
+    #filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5,"g":6,"h":7}
     colsToFiles = {v: k for k,v in filesToCols.items()} #quick way to reverse the pairs for ranksToRows
 
     def getChessNotation(self):
         return self.getRankFile(self.start_tile[0], self.start_tile[1]) + self.getRankFile(self.end_tile[0], self.end_tile[1])
-    
-    def getRankFile(self,r,c):
+
+    def getRankFile(self,r,c):  
         return self.colsToFiles[c] + self.rowToRanks[r]
+
+    # def getXYCoordinates(self,r,c)
+    #     return self.
+
+        
