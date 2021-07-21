@@ -611,50 +611,23 @@ void compare_board_states() {
 
 
 void receive_data() {                                     // if statements for boolean data -NEEDS WORK
-  if (Serial.available() > 0) {                          // check if serial data is available from python
-    // read the data
-    if (Serial.find("Legal moves:")) {                     // possibly receive as Legal moves: [ , ], [ , ],...
-      while (Serial.available()) {
-        ChangeLEDState(LED_row_pins, true);
-        ChangeLEDState(LED_col_R_pins, false);
-        ChangeLEDState(LED_col_G_pins, false);
+ if (Serial.find("Legal moves:")) {                     
+        turn_on_GREEN = true;                               // turn on green LEDs for legal moves 
+        turn_on_RED = false;
 
-        // Get row and column from data
-
-        turn_on_LEDs(r,c,false,true);
-
+      } else if (Serial.find("AI move:")) {     
+        turn_on_GREEN = true;
+        turn_on_RED = true;                               // green and red is true for yellow LED (AI move)
       }
 
-      int legal_row_on = Serial.parseInt();                  // parses numeric characters before the comma
-      int legal_col_on = Serial.parseInt();              // parses numeric characters after the comma
-      digitalWrite(LED_row_pins[legal_row_on], LOW);      // set LED row coordinate to LOW
-      digitalWrite(LED_col_R_pins[legal_col_on], LOW);     // set RED off
-      digitalWrite(LED_col_G_pins[legal_col_on], HIGH);     // set GREEN on for legal moves
-    }
-
-
-  }
-  else if (Serial.find("AI move:")) {                 // need to light up two spaces
-    int AI_row_on = Serial.parseInt();            // parses numeric characters before the comma
-    int AI_col_on = Serial.parseInt();               // parses numeric characters after the comma
-    digitalWrite(LED_row_pins[AI_row_on], LOW);       // set LED row coordinate to LOW
-    digitalWrite(LED_col_R_pins[AI_col_on], HIGH);
-    digitalWrite(LED_col_G_pins[AI_col_on], HIGH);    // turn on both for yellow (AI move)
-
-  }
-  else if (Serial.find("Illegal move:")) {               // need to light up wrong move and last move
-    int illegal_row_on = Serial.parseInt();                    // parses numeric characters before the comma
-    int illegal_col_on = Serial.parseInt();                        // parses numeric characters after the comma
-    digitalWrite(LED_row_pins[illegal_row_on], LOW);                 // set LED row coordinate to LOW
-    digitalWrite(LED_col_R_pins[illegal_col_on], HIGH);                 // turn on RED for illegal move
-    digitalWrite(LED_col_G_pins[illegal_col_on], LOW);               // turn off GREEN
-
-  }
-  else {
-    for (int row_now = 0; row_now < 8; row_now++) {
-      digitalWrite(LED_row_pins[row_now], HIGH);                 // set all rows to HIGH (OFF) if we don't receive any of the above conditions
-    }
-  }
+       else if (Serial.find("Illegal move:")) {  
+        turn_on_GREEN = false;                            // turn on red LED for illegal move
+        turn_on_RED = true;
+       }
+       else {
+        turn_on_GREEN = false;
+        turn_on_RED = false;
+       }
 
 }
 
