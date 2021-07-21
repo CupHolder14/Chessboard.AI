@@ -48,7 +48,6 @@ def main():
     PrintBoard = False
     PrintWinner = False
     PrintMoves = False #JUST USE GET_NEW_LEGAL_MOVES
-
     selected_tile = () #Most recent tile selected will be placed here and used throughout the code.
     tile_sequence = [] #Stores a sequence of selected_tiles
     potential_moves = [] #List of moves sent to Helen when a piece is picked up
@@ -67,21 +66,21 @@ def main():
         PlayerTurn = (game.Player1Move and WhitePlayer) or (not game.Player1Move and BlackPlayer)  #If it's not a player's turn, we will disable inputs from the human
         GAMEOVER = False
 
-        '''
-        Print legal_moves At Each Move
-        '''
-        if not PrintMoves:
-            #print(legal_moves) "MOVE object", needs converting first
-            print()
-            print("LEGAL MOVES FOR " + ("WHITE:" if game.Player1Move else "BLACK:"))
-            for move in legal_moves:
-                print(move.getChessNotation())
-            print()
-            PrintMoves = True
+        # '''
+        # Print legal_moves At Each Move
+        # '''
+        # if not PrintMoves:
+        #     #print(legal_moves) "MOVE object", needs converting first
+        #     print()
+        #     print("LEGAL MOVES FOR " + ("WHITE:" if game.Player1Move else "BLACK:"))
+        #     for move in legal_moves:
+        #         print(move.getChessNotation())
+        #     print()
+        #     PrintMoves = True
 
-        '''
-        Print BoardState At Each Move
-        '''
+        # '''
+        # Print BoardState At Each Move
+        # '''
         # if not PrintBoard:  
         #     for line in game.boardstate:
         #         print(line)
@@ -105,8 +104,6 @@ def main():
         '''
         Event Handler 
         '''
-        #for event in ChessEvents.events:
-        #LAST WORKING SESSION HERE 
         for event in ChessEvents.events:
             
             #### TAKE THIS LIST OF EVENTS AND REDIRECT THE EVENTS ACCORDING TO WHAT NEEDS TO HAPPEN NEXT.
