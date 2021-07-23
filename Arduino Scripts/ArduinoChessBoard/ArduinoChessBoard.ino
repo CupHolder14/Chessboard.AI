@@ -16,9 +16,8 @@ int BlackButton = 8;
 int LED_row_pins[8] = {22, 23, 27, 49, 28, 45, 43, 25}; // pins for LED rows
 int LED_col_R_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Red)
 int LED_col_G_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Green)
-int sensor_rows_pins[8] = {2, 3, 4, 5, 6, 7, 8, 9};   // pins for the sensor rows  - need to be aligned with positions 0 to 7
-int sensor_cols_pins[8] = {10, 11, 12, 13, 14, 15, 16, 17}; // pins for the sensor columns - need to be aligned with positions 0 to 7
-
+int sensor_rows_pins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows  
+int sensor_cols_pins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns 
 /* Variables */
 // LCD Variables
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -567,7 +566,7 @@ void read_current_board_state() {
     ChangeLEDState(sensor_rows_pins, false);              // set all rows to low
 
     digitalWrite(sensor_rows_pins[row_now], HIGH);                  // set rows HIGH one at a time to start scanning
-    delay(2000);
+    delay(200);
 
     for (int col_now = 0; col_now < 8; col_now++) {
       current_sensor_board_state[row_now][col_now] = {digitalRead(sensor_cols_pins[col_now])};
@@ -583,24 +582,24 @@ void compare_board_states() {
       switch (difference) {
         case -1 :
           // piece removed
-          Serial.print("picked up piece=");
-          Serial.print("[");
+          Serial.print("InitialTile:");
+          Serial.print("(");
           Serial.print(row);
           Serial.print(",");
           Serial.print(col);
-          Serial.println("]");
+          Serial.println(")");
           delay(2000);
           break;
         case 0 :
           break;
         case 1 :
           // piece moved(landed)
-          Serial.print("playing piece landed here=");
-          Serial.print("[");
+          Serial.print("NextTile:");
+          Serial.print("(");
           Serial.print(row);
           Serial.print(",");
           Serial.print(col);
-          Serial.println("]");
+          Serial.println(")");
           break;
       }
     }
@@ -608,27 +607,63 @@ void compare_board_states() {
   last_sensor_board_state[8][8] = current_sensor_board_state;
 }
 
+int rowMoves[21];
+int colMoves[21];
+// [(5,3),(4,3)]
 
-
-void receive_data() {                                     // if statements for boolean data -NEEDS WORK
- if (Serial.find("Legal moves:")) {                     
-        turn_on_GREEN = true;                               // turn on green LEDs for legal moves 
+void ParseData(){
+  bool flag = true;
+  int j = 99;
+  for(int i = 0; i < 21; i++++){
+    j = Serial.parseInt();
+    if(j != 99){
+      if(flag){
+        rowMoves[i] = j;
+      }
+      else{
+        colMoves[i] = j
+      }
+    }
+    j = 99;
+  }
+  
+  for(int i = 0; i < 42; i++){
+    j = Serial.parseInt();
+    if(j != 99){
+      if(flag){
+        rowMoves[i] = j;
+      }
+      else{
+        colMoves[i] = j
+      }
+    }
+    j = 99;
+  }
+}
+void receive_data() {                                     // if statements for boolean data
+  if (Serial.available()>0){
+     if (Serial.find("LegalMoves:")) {
+        turn_on_GREEN = true;                               // turn on green LEDs for legal moves
         turn_on_RED = false;
 
-      } else if (Serial.find("AI move:")) {     
+      } else if (Serial.find("AIMove:")) {                // 2 coordinates will be sent
         turn_on_GREEN = true;
         turn_on_RED = true;                               // green and red is true for yellow LED (AI move)
       }
 
-       else if (Serial.find("Illegal move:")) {  
+       else if (Serial.find("IllegalMove:")) {             // 1 coordinate will be sent
         turn_on_GREEN = false;                            // turn on red LED for illegal move
         turn_on_RED = true;
+        int row = Serial.parseInt();                      // the first integer is the row value
+        int col = Serial.parseInt();                      // the second integer is the col value
+        
        }
        else {
         turn_on_GREEN = false;
         turn_on_RED = false;
        }
 
+  }
 }
 
 
