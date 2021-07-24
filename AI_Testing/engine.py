@@ -353,15 +353,18 @@ class Move():
     #key : value
     ranksToRows = {"0":0, "1":1, "2":2,"3":3,"4":4,"5":5,"6":6,"7":7}
     rowToRanks = {v: k for k,v in ranksToRows.items()} #quick way to reverse the pairs for ranksToRows
-    filesToCols = {"0,":0,"1,":1,"2,":2,"3,":3,"4,":4,"5,":5,"6,":6,"7,":7}
+    filesToCols = {"0":0,"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7}
     #filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5,"g":6,"h":7}
     colsToFiles = {v: k for k,v in filesToCols.items()} #quick way to reverse the pairs for ranksToRows
 
     def getChessNotation(self):
-        return self.getRankFile(self.start_tile[0], self.start_tile[1]) + self.getRankFile(self.end_tile[0], self.end_tile[1])
+        move = (self.getRankFile(self.start_tile[1], self.start_tile[0]) + self.getRankFile(self.end_tile[1], self.end_tile[0]))
+        #move = ((int(move[0]),int(move[1])),int(move[2],int(move[3])))
+        move = ([((int(move[0])),(int(move[1]))),((int(move[2])),(int(move[3])))])
+        return move
 
     def getRankFile(self,r,c):  
-        return self.colsToFiles[c] + self.rowToRanks[r]
+        return (self.colsToFiles[c] + self.rowToRanks[r])
 
     # def getXYCoordinates(self,r,c)
     #     return self.
