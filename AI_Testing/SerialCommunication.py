@@ -11,46 +11,32 @@ def ReadSerial():
             if "StartGame:" in DATA:
                 ParseAppend(DATA,bool)
                 return
-                # ChessEvents.events.append("StartGame")
-                # x = DATA.strip("StartGame: ")
-                # ChessEvents.values.append(x)
-                # return
             
+            if "VsHuman:" in DATA:
+                ParseAppend(DATA,bool)
+                return
+
             if "Difficulty:" in DATA:
                 ParseAppend(DATA,int)
-                # ChessEvents.events.append("Difficulty")
-                # x = DATA.strip("Difficulty: ")
-                # difficulty = int(x)
-                # ChessEvents.values.append(difficulty)
                 return
 
             if "InitialTile:" in DATA:
-                ChessEvents.events.append("InitialTile")
-                x = DATA.strip("InitialTile:")
-                col = int(x[3:4])
-                row = int(x[1:2])
-                ChessEvents.values.append((col,row))
+                ParseAppend(DATA,eval)
                 return
 
             if "NextTile:" in DATA:
-                ChessEvents.events.append("NextTile")
-                x = DATA.strip("NextTile:")
-                col = int(x[3:4])
-                row = int(x[1:2])
-                ChessEvents.values.append((col,row))
+                ParseAppend(DATA,eval)
                 return
 
-            if "GameOver:" in DATA:
+            if "TimeOut:" in DATA:
                 ParseAppend(DATA,bool)
                 return
-                # ChessEvents.events.append("GameOver")
-                # x = DATA.strip("GameOver: ")
-                # ChessEvents.values.append(x)
-                # return
-            if "PRINT:" in DATA:
+
+            if "Print:" in DATA: #Tester
                 ParseAppend(DATA,str)
                 return
-def ReadTest():
+
+def ReadTest(): #Reading is a work in progress still
     while True:
         DATA = serialport.readline().decode('ascii')
         return DATA

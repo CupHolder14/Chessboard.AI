@@ -7,7 +7,7 @@ simply being used for preliminary testing purposes.
 '''
 Imports
 '''
-import SerialCommunication as SC
+#import SerialCommunication as SC
 import ChessEvents
 import engine, AI
 game = engine.Game() #Name a variable to access the GameState class in our engine function
@@ -51,7 +51,8 @@ def main():
     selected_tile = () #Most recent tile selected will be placed here and used throughout the code.
     tile_sequence = [] #Stores a sequence of selected_tiles
     potential_moves = [] #List of moves sent to Helen when a piece is picked up
-
+    GreenMoves = []
+    legal_moves_refmt = []
 
     '''
     SET THE GAME MODE (PvAI OR PvP)
@@ -59,7 +60,6 @@ def main():
     WhitePlayer = True #Set to true if a human is playing white
     
     BlackPlayer = False #Set to true if a human is playing black
-
 
     '''MAIN LOOP'''
     while running:
@@ -104,11 +104,6 @@ def main():
         '''
         Event Handler 
         '''
-        for event in ChessEvents.events:
-            
-            #### TAKE THIS LIST OF EVENTS AND REDIRECT THE EVENTS ACCORDING TO WHAT NEEDS TO HAPPEN NEXT.
-            pass
-
         for event in pygame.event.get(): #grabs each event in a queue
             if (event.type == pygame.QUIT): # or QUIT: #Pygame default quitting handler (i.e. closing the application in any way will trigger this.) 
                 running = False #This will end the loop.
@@ -123,22 +118,44 @@ def main():
                     x_y_loc = pygame.mouse.get_pos() #This takes the immediate (x,y) location of the mouse after clicking
                     col = int(x_y_loc[0]/tile_size) #The row and columns can be determined by dividing by the tile size.
                     row = int(x_y_loc[1]/tile_size)
-                    
+
                     if selected_tile == (row,col): #We want to store our row and col values, if they are already being stored, then it means the same square was clicked twice.
                         selected_tile = () #Since it's a double click, we want to empty selected_tile in order to undo the first click.
                         tile_sequence = [] #Our tile sequence should be reset as well
-                        print(selected_tile)
+                        #print(selected_tile)
                     else:
                         selected_tile = (row,col)
                         tile_sequence.append(selected_tile) # If it was a unique click, we store that coordinate in a tuple
-                    # for move in legal_moves:
-                    #     if str(move.getChessNotation()[:2]) == "a2":
-                    #         potential_moves = move
-                    # print(potential_moves.getChessNotation())
+
+                        '''GREEN MOVE SCANNER'''
+                        for i in legal_moves:
+                            #LAST SESSION HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            # FINISH THIS GREENMOVES LIST AND MOVE IT TO NEWMAIN.py
+                            if i.getChessNotation() not in legal_moves_refmt:
+                                legal_moves_refmt.append(i.getChessNotation()) #legal_moves_refmt is tripling the entries(for knights) is append wrong?
+                            #print(i.getChessNotation())
+                        for j in legal_moves_refmt:
+                            if j[0] == selected_tile:
+                                #print(j[0])
+                                #print(j[1])
+                                GreenMoves.append(j[1])
+                            #Send GreenMoves to Helen
+
+
+                        #This converts the data into a list of all the row coordinates and a list of all of the col coordinates
+                        # RTEST = [x[0] for x in GreenMoves]
+                        # CTEST = [x[1] for x in GreenMoves]
+                        # print("Rows:" + str(RTEST))
+                        # print("Columns:" + str(CTEST))
+
+                        #print("LEGAL MOVES:" + str(GreenMoves))
+                        GreenMoves = []
+
                     
                     if len(tile_sequence) == 2: #after we store 2 unique clicks, a path has been created to successfully make a move. 
+                        #print(tile_sequence)
                         move = engine.Move(tile_sequence[0],tile_sequence[1],game.boardstate)
-                        #print(move.getChessNotation())
+                       #print(move.getChessNotation())
                         
                         #Check if the move sent to tile_sequence was a legal move or not!
                         for i in range(len(legal_moves)):
@@ -165,7 +182,7 @@ def main():
                         pass
                     else:
                         game.undo_move() #run the undo function
-                        get_new_legal_moves = True 
+                        get_new_legal_moves = True
                         GAMEOVER = False
                 # if event.key == pygame.K_r: #reset the game when r is pressed. THIS NEEDS TO BE FIXED.
                 #     game = engine.Game()
@@ -183,6 +200,8 @@ def main():
             if AIMove is None:
                 AIMove = AI.findRandomMove(legal_moves)
             game.make_move(AIMove)
+            SENDMOVE = AIMove.getChessNotation()
+            #print(SENDMOVE)
             PrintBoard = False
             if game.in_check(): 
                 print('Check!')
