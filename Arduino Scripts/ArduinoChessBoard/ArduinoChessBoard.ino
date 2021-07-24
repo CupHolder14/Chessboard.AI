@@ -16,8 +16,8 @@ int BlackButton = 8;
 int LED_row_pins[8] = {22, 23, 27, 49, 28, 45, 43, 25}; // pins for LED rows
 int LED_col_R_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Red)
 int LED_col_G_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Green)
-int sensor_rows_pins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows  
-int sensor_cols_pins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns 
+int sensor_rows_pins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
+int sensor_cols_pins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
 /* Variables */
 // LCD Variables
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -68,7 +68,7 @@ class InData {
       this->Winner = 0;
     }
 
-    
+
 };
 
 // Data to be sent
@@ -82,8 +82,8 @@ class OutData {
       this->GAMEOVER = 0;
     }
 
-    void SendMove(){
-      
+    void SendMove() {
+
     }
 };
 
@@ -102,7 +102,7 @@ class Settings {
       String secs = Secs >= 10 ? String(Secs) : "0" + String(Secs);
       lcd.print(mins + ":" + secs);
     }
-    
+
   public:
     bool GameInProgress;
     bool InfLength;
@@ -611,95 +611,59 @@ int rowMoves[21];
 int colMoves[21];
 // [(5,3),(4,3)]
 
-void ParseData(){
-  bool flag = true;
+int ParseData() {
   int j = 99;
-  for(int i = 0; i < 21; i++++){
+  int index = 0;
+  for (int i = 0; i < 42; i++) {
     j = Serial.parseInt();
-    if(j != 99){
-      if(flag){
-        rowMoves[i] = j;
+    if (j != 99) {
+      if (i % 2 == 0) {
+        rowMoves[index] = j;
       }
-      else{
-        colMoves[i] = j
+      else {
+        colMoves[index] = j;
+        index++;
       }
+      j = 99;
     }
-    j = 99;
   }
-  
-  for(int i = 0; i < 42; i++){
-    j = Serial.parseInt();
-    if(j != 99){
-      if(flag){
-        rowMoves[i] = j;
-      }
-      else{
-        colMoves[i] = j
-      }
-    }
-    j = 99;
+  return index;
+}
+
+void WipeArray() {
+  for (int i = 0; i < 21; i++) {
+    rowMoves[i] = 99;
+    colMoves[i] = 99;
   }
 }
+
+void LEDScan(bool isGreen, bool isRed) {
+  int maxMoves = ParseData();
+  ChangeLEDState(LED_row_pins, true)
+  for (int i = 0; i < maxMoves; i++) {
+    turn_on_LEDs(rowMoves[i], colMoves[i], isGreen, isRed);
+  }
+}
+
 void receive_data() {                                     // if statements for boolean data
-  if (Serial.available()>0){
-     if (Serial.find("LegalMoves:")) {
-        turn_on_GREEN = true;                               // turn on green LEDs for legal moves
-        turn_on_RED = false;
-
-      } else if (Serial.find("AIMove:")) {                // 2 coordinates will be sent
-        turn_on_GREEN = true;
-        turn_on_RED = true;                               // green and red is true for yellow LED (AI move)
-      }
-
-       else if (Serial.find("IllegalMove:")) {             // 1 coordinate will be sent
-        turn_on_GREEN = false;                            // turn on red LED for illegal move
-        turn_on_RED = true;
-        int row = Serial.parseInt();                      // the first integer is the row value
-        int col = Serial.parseInt();                      // the second integer is the col value
-        
-       }
-       else {
-        turn_on_GREEN = false;
-        turn_on_RED = false;
-       }
-
+  if (Serial.available() > 0) {
+    if (Serial.find("LegalMoves:")) {
+      LEDScan(true, false);
+    }
+    else if (Serial.find("AIMove:")) {                // 2 coordinates will be sent
+      LEDScan(true, true);
+    }
+    else if (Serial.find("IllegalMove:")) {             // 1 coordinate will be sent
+      LEDScan(false, true);
+    }
+    else {
+      LEDScan(false, false);
+    }
   }
 }
 
-
-void turn_on_LEDs(int row, int col, bool isRed, bool isGreen) {
+void turn_on_LEDs(int row, int col, bool isGreen, bool isRed) {
   digitalWrite(LED_row_pins[row], LOW);
-  digitalWrite(LED_col_R_pins[col], isRed);
   digitalWrite(LED_col_G_pins[col], isGreen);
-  
-  
-  
-  
-  for (int row_LED = 0; row_LED < 8; row_LED++) {     // iterate over LED rows to check which LEDs need to be turned on
-    ChangeLEDState(LED_row_pins, true);               // turn all LEDs off
-    digitalWrite(LED_row_pins[row_LED], LOW);
-    delay(1000);
-    for (int col_LED = 0; col_LED < 8; col_LED++) {
-      ChangeLEDState(LED_col_R_pins, false);          // turn all RED LEDs off      
-
-      ChangeLEDState(LED_col_G_pins, false);          // turn all GREEN LEDs off          
-
-      if (turn_on_RED == true) {
-        digitalWrite(LED_col_R_pins[col_LED], HIGH); {
-        }
-      }
-      else {
-        digitalWrite(LED_col_R_pins[col_LED], LOW);
-      }
-
-      if (turn_on_GREEN == true) {
-        digitalWrite(LED_col_G_pins[col_LED], HIGH); {
-        }
-      }
-      else {
-        digitalWrite(LED_col_G_pins[col_LED], LOW);
-      }
-
-    }
-  }
+  digitalWrite(LED_col_R_pins[col], isRed);
 }
