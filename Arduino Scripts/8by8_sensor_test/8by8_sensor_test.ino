@@ -36,7 +36,7 @@ void loop() {
 //      Serial.print("value:");
         Serial.print(current_sensor_board_state);
       
-      delay(100);  
+      delay(35);  
   }
   Serial.println();
   }

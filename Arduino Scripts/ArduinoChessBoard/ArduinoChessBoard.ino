@@ -2,20 +2,20 @@
 #include <LiquidCrystal_I2C.h>
 
 /* Debugging Variables */
-bool DEBUGGING = true;
+bool DEBUGGING = false;
 
 /* Pin Variables */
 // LCD PINS
-int upButton = 7;
-int downButton = 8;
-int acceptButton = 12;
-int denyButton = 13;
-int WhiteButton = 7;
-int BlackButton = 8;
+int upButton = A14;
+int downButton = A8;
+int acceptButton = A12;
+int denyButton = A10;
+int WhiteButton = A8  ;
+int BlackButton = A14;
 // Board State Pins
-int LED_row_pins[8] = {22, 23, 27, 49, 28, 45, 43, 25}; // pins for LED rows
-int LED_col_R_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Red)
-int LED_col_G_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Green)
+int LED_row_pins[8] = {13, 12, 11, 10, 9, 8, 7, 6}; // pins for LED rows
+int LED_col_R_pins[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns (Red)
+int LED_col_G_pins[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns (Green)
 int sensor_rows_pins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
 int sensor_cols_pins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
 /* Variables */
@@ -82,8 +82,9 @@ class OutData {
       this->GAMEOVER = 0;
     }
 
-    void SendMove() {
-
+    void SendData(String opCode, String value) {
+      String Data = opCode + ":" + value;
+      Serial.println(Data);
     }
 };
 
@@ -112,6 +113,7 @@ class Settings {
     int Secs_White;
     int Secs_Black;
     String AiDifficulty;
+    int AiDifficultyValue;
     bool AgainstAI;
     bool IsWhitesTurn;
     bool IsWhitePlayer;
@@ -125,6 +127,7 @@ class Settings {
       this->InfLength = false;
       this->TimerLength = 10;
       this->AiDifficulty = "Easy";
+      this->AiDifficultyValue = 2;
       this->PrevTime = 0;
       this->IsWhitesTurn = true;
       this->IsPaused = false;
@@ -149,12 +152,15 @@ class Settings {
     void IncreaseDifficulty(String* AiDifficultyMenu) {
       if (AiDifficulty == "Easy") {
         AiDifficulty = "Medium";
+        AiDifficultyValue = 2;
       }
       else if (AiDifficulty == "Medium") {
         AiDifficulty = "Hard";
+        AiDifficultyValue = 3;
       }
       else if (AiDifficulty == "Hard") {
         AiDifficulty = "Easy";
+        AiDifficultyValue = 1;
       }
       AiDifficultyMenu[0] = "    < " + AiDifficulty + " >";
     }
@@ -230,8 +236,14 @@ class Settings {
       lcd.print("Last Move");
 
       if (againstAI) {
-        // Tell python to start ai engine
+        Data_OUT.SendData("VsHuman", "");
+        Data_OUT.SendData("Difficulty", String(AiDifficultyValue));
       }
+      else{
+        Data_OUT.SendData("VsHuman", "True");
+      }
+      Data_OUT.SendData("StartGame", "True");
+      
     }
 
     void Tick() {
@@ -245,8 +257,9 @@ class Settings {
           else {
             // Timer Depleted for white
             GameInProgress = false;
-            lcd.print("                    ");
+            lcd.setCursor(0, 0);
             lcd.print("Game Over - Black Wins");
+            Data_OUT.SendData("TimeOut", "True");
           }
         }
         else {
@@ -268,9 +281,8 @@ class Settings {
             // Timer Depleted for black
             GameInProgress = false;
             lcd.setCursor(0, 0);
-            lcd.print("                    ");
-            lcd.setCursor(0, 0);
             lcd.print("Game Over - White Wins");
+            Data_OUT.SendData("TimeOut", "True");
           }
         }
         else {
@@ -353,13 +365,11 @@ void loop() {
       settings.IsWhitesTurn = !settings.IsWhitesTurn;
       while (!digitalRead(WhiteButton));
     }
-    receive_data;
+    receive_data;     // Read serial port for data from python
 
-    turn_on_LEDs;
+    read_current_board_state;       // Read the current board state
 
-    read_current_board_state;
-
-    compare_board_states;
+    compare_board_states;       // Find out how the board state changed
   }
   else if (settings.GameInProgress && settings.IsPaused) {
     if (!digitalRead(upButton)) {
@@ -368,6 +378,7 @@ void loop() {
         RefreshScreen("up");
       }
       while (!digitalRead(upButton));
+      delay(0.5);
     }
     if (!digitalRead(downButton)) {
       if (menuIndex != 3 && menuIndex != maxIndex) {
@@ -375,6 +386,7 @@ void loop() {
         RefreshScreen("down");
       }
       while (!digitalRead(downButton));
+      delay(0.5);
     }
     if (!digitalRead(acceptButton)) {
       switch (menuIndex) {
@@ -388,9 +400,12 @@ void loop() {
           currentMenu = 0;
           settings.GameInProgress = false;
           settings.IsPaused = false;
+          outdata.SendData("Quit", "True");
           WriteToScreen("Classical Chess", mainMenu);
           break;
       }
+      while(!digitalRead(acceptButton));
+      delay(0.5);
     }
   }
   else {
@@ -401,6 +416,7 @@ void loop() {
         RefreshScreen("up");
       }
       while (!digitalRead(upButton));
+      delay(0.5);
     }
     if (!digitalRead(downButton)) {
       PrintLog("downButton");
@@ -409,6 +425,7 @@ void loop() {
         RefreshScreen("down");
       }
       while (!digitalRead(downButton));
+      delay(0.5);
     }
     if (!digitalRead(acceptButton)) {
       PrintLog("acceptButton");
@@ -489,6 +506,7 @@ void loop() {
           break;
       }
       while (!digitalRead(acceptButton));
+      delay(0.5);
     }
     if (!digitalRead(denyButton)) {
       PrintLog("denyButton");
@@ -518,6 +536,7 @@ void loop() {
       }
     }
     while (!digitalRead(denyButton));
+    delay(0.5);
   }
 }
 
@@ -576,30 +595,23 @@ void read_current_board_state() {
 
 
 void compare_board_states() {
+  String data;
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
       int difference = current_sensor_board_state[row][col] - last_sensor_board_state[row][col];
       switch (difference) {
         case -1 :
-          // piece removed
-          Serial.print("InitialTile:");
-          Serial.print("(");
-          Serial.print(row);
-          Serial.print(",");
-          Serial.print(col);
-          Serial.println(")");
-          delay(2000);
+        // Piece Picked Up
+          data = "(" + String(row) + "," + String(col) + ")";
+          outdata.SendData("InitialTile", data);
           break;
         case 0 :
+        // Nothing happened
           break;
         case 1 :
-          // piece moved(landed)
-          Serial.print("NextTile:");
-          Serial.print("(");
-          Serial.print(row);
-          Serial.print(",");
-          Serial.print(col);
-          Serial.println(")");
+        // Piece Moved
+          data = "(" + String(row) + "," + String(col) + ")";
+          outdata.SendData("NextTile", data);
           break;
       }
     }
@@ -639,7 +651,7 @@ void WipeArray() {
 
 void LEDScan(bool isGreen, bool isRed) {
   int maxMoves = ParseData();
-  ChangeLEDState(LED_row_pins, true)
+  ChangeLEDState(LED_row_pins, true);
   for (int i = 0; i < maxMoves; i++) {
     turn_on_LEDs(rowMoves[i], colMoves[i], isGreen, isRed);
   }

@@ -61,10 +61,8 @@ def main():
             print("Game Is Now Running")
         elif event == "Difficulty": #Depth of the AI
             AI.DEPTH = value
-            print("Difficulty Set To:" + AI.DEPTH)
         elif event == "VsHuman": #PLaying against an AI or not
             BlackPlayer = value
-            print("Vs Human Mode Set" if BlackPlayer else "Vs AI Mode Set")
         else:
             PrintError("No Setup Opcode Found")
 
@@ -81,7 +79,7 @@ def main():
             '''
             if PlayerTurn and not GameOver:
                 SC.ReadSerial() #Read for events
-                print("Events Queue:" + str(ChessEvents.events))
+                #print("Events Queue:" + str(ChessEvents.events))
                 event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
 
                 if event == "TimeOut": #CHANGE GameOver to TimeOut or something
@@ -90,6 +88,7 @@ def main():
                     SC.WriteSerial("Winner",str(not game.Player1Move)) #Sends Majed Winner Variable
 
                 elif event == "Quit":  #If we're quitting, then just stop it entirely
+                    print(value)
                     running = False
                 #InitialTile:(2,2)
                 elif event == "InitialTile" and ChessEvents.LastEvent != "InitialTile": #If a tile is picked up that is the same as "MouseButtonDown in PyGame"
@@ -106,9 +105,6 @@ def main():
                         for j in legal_moves_refmt:
                             if j[0] == selected_tile:
                                 GreenMoves.append(j[1])
-                        RTEST = [x[0] for x in GreenMoves]
-                        print(RTEST)
-                        #print("LEGAL MOVES:" + str(GreenMoves))
                         SC.WriteSerial("LegalMoves:",str(SendMove)) #Sends Helen a Green LED Opcode at those positions
                         GreenMoves = []
 

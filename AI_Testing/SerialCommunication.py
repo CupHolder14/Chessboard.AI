@@ -1,7 +1,7 @@
 import serial
 import ChessEvents
 
-serialport = serial.Serial('COM3', 9600)
+serialport = serial.Serial('COM4', 9600)
 serialport.timeout = 1
 
 def ReadSerial():
@@ -21,10 +21,12 @@ def ReadSerial():
                 return
 
             if "InitialTile:" in DATA:
+                print(DATA)
                 ParseAppend(DATA,eval)
                 return
 
             if "NextTile:" in DATA:
+                print(DATA)
                 ParseAppend(DATA,eval)
                 return
 
@@ -32,8 +34,8 @@ def ReadSerial():
                 ParseAppend(DATA,bool)
                 return
 
-            if "Print:" in DATA: #Tester
-                ParseAppend(DATA,str)
+            if "Quit:" in DATA:
+                ParseAppend(DATA,bool)
                 return
 
 def ReadTest(): #Reading is a work in progress still
@@ -46,6 +48,6 @@ def WriteSerial(OPCODE, DATA):
     
 
 def ParseAppend(DATA, type):
-    DATA = DATA.split(':')
+    DATA = DATA.strip().split(':')
     ChessEvents.events.append(DATA[0])
     ChessEvents.values.append(type(DATA[1]))
