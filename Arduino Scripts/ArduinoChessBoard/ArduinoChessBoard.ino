@@ -13,20 +13,21 @@ int denyButton = A10;
 int WhiteButton = A8  ;
 int BlackButton = A14;
 // Board State Pins
-int LED_row_pins[8] = {13, 12, 11, 10, 9, 8, 7, 6}; // pins for LED rows
-int LED_col_R_pins[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns (Red)
-int LED_col_G_pins[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns (Green)
-int sensor_rows_pins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
-int sensor_cols_pins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
-/* Variables */
+int LEDRowPins[8] = {13, 12, 11, 10, 9, 8, 7, 6}; // pins for LED rows
+int LEDColPins_R[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns (Red)
+int LEDColPins_G[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns (Green)
+int sensorRowPins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
+int sensorColPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
+
+/* Global Variables */
 // LCD Variables
-LiquidCrystal_I2C lcd(0x27, 20, 4);
+LiquidCrystal_I2C lcd(0x27, 20, 4);         // Set address line for the 20x4 LCD Screen
 
 int currentMenu;
 int menuIndex;
 int maxIndex;
 
-// menu options
+// Menu Screens
 String mainMenu[] = {"Play", "Settings"};                             // 0
 String playMenu[] = {"Vs. AI", "Vs. Player"};                         // 1
 String settingsMenu[] = {"Timer Length", "AI Difficulty"};            // 2
@@ -38,7 +39,8 @@ String AiDifficultyMenu[] = {"    < Easy >", "Confirm"};              // 7
 
 
 // Board State Variables
-int last_sensor_board_state[8][8] =
+int CurrentSensorBoardState[8][8];       // Array to assign the current board state to
+int LastSensorBoardState[8][8] =
 { {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -48,40 +50,24 @@ int last_sensor_board_state[8][8] =
   {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1}
 };
-int current_sensor_board_state[8][8];
-
-bool turn_on_RED = false;                  // set to true depending on the move received
-bool turn_on_GREEN = false;
 
 
 
 /* Classes */
 // Data to be received
 class InData {
-  public:
-    bool GAMEOVER; // True = game is over, false = game is active
-    int Winner; // 0 = white, 1 = black, 2 = stalemate
-    // operation
-
-    InData() {
-      this->GAMEOVER = false;
-      this->Winner = 0;
+    // Class that houses the functions to interpret data sent to the arduino from the python side
+    public:
+    InData(){
     }
-
-
 };
 
 // Data to be sent
 class OutData {
+    // Class that houses the functions to send data to the python side
   public:
-    bool BlackPlayer; // false = vs. AI, true = vs. Human
-    bool GAMEOVER; // True = game is over, false = game is active
-
     OutData() {
-      this->BlackPlayer = false;
-      this->GAMEOVER = 0;
     }
-
     void SendData(String opCode, String value) {
       String Data = opCode + ":" + value;
       Serial.println(Data);
@@ -90,15 +76,17 @@ class OutData {
 
 // Internal Settings
 class Settings {
+    // Class that houses all the internal settings 
   private:
-
     void UpdateClock(int Mins, int Secs, bool IsWhitesTurn) {
+        // Function to update the clock in the corresponding position
       if (IsWhitesTurn) {
         lcd.setCursor(9, 2);
       }
       else {
         lcd.setCursor(15, 2);
       }
+      // Add 0 infront of the time if it is less than 10 ex. 4 -> 04
       String mins = Mins >= 10 ? String(Mins) : "0" + String(Mins);
       String secs = Secs >= 10 ? String(Secs) : "0" + String(Secs);
       lcd.print(mins + ":" + secs);
@@ -106,21 +94,29 @@ class Settings {
 
   public:
     bool GameInProgress;
+    
+    // Timer variables
     bool InfLength;
+    bool IsPaused;
     int TimerLength;
     int Mins_White;
     int Mins_Black;
     int Secs_White;
     int Secs_Black;
+    unsigned long PrevTime;
+
+    // AI Variables
     String AiDifficulty;
     int AiDifficultyValue;
     bool AgainstAI;
+
+    // Turn Variables
     bool IsWhitesTurn;
     bool IsWhitePlayer;
-    bool IsPaused;
-    unsigned long PrevTime;
-    InData Data_IN;
-    OutData Data_OUT;
+
+    // Class Declerations
+    InData dataIn;
+    OutData dataOut;
 
     Settings() {
       this->GameInProgress = false;
@@ -134,6 +130,7 @@ class Settings {
     }
 
     void IncreaseTimer(String* TimerLengthMenu) {
+        // Function to increase the timer length after changing it on the settings screen
       if (TimerLength == 20 && InfLength == false) {
         InfLength = true;
         TimerLengthMenu[0] = "    < unlimited >";
@@ -150,6 +147,7 @@ class Settings {
     }
 
     void IncreaseDifficulty(String* AiDifficultyMenu) {
+        // Function to increase the difficulty after changing it on the settings screen
       if (AiDifficulty == "Easy") {
         AiDifficulty = "Medium";
         AiDifficultyValue = 2;
@@ -166,6 +164,7 @@ class Settings {
     }
 
     void PauseScreen() {
+    // Displays the PauseScreen
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Game Paused");
@@ -178,6 +177,7 @@ class Settings {
     }
 
     void ResumeScreen() {
+    // Resets the screen to the in-game screen
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("In Game");
@@ -236,17 +236,18 @@ class Settings {
       lcd.print("Last Move");
 
       if (againstAI) {
-        Data_OUT.SendData("VsHuman", "");
-        Data_OUT.SendData("Difficulty", String(AiDifficultyValue));
+        dataOut.SendData("VsHuman", "");
+        dataOut.SendData("Difficulty", String(AiDifficultyValue));
       }
       else{
-        Data_OUT.SendData("VsHuman", "True");
+        dataOut.SendData("VsHuman", "True");
       }
-      Data_OUT.SendData("StartGame", "True");
+      dataOut.SendData("StartGame", "True");
       
     }
 
     void Tick() {
+        // Function to tick the clock every second. Delays are not used for efficiency
       if (IsWhitesTurn) {
         if (Secs_White == 0) {
           if (Mins_White != 0) {
@@ -259,7 +260,7 @@ class Settings {
             GameInProgress = false;
             lcd.setCursor(0, 0);
             lcd.print("Game Over - Black Wins");
-            Data_OUT.SendData("TimeOut", "True");
+            dataOut.SendData("TimeOut", "True");
           }
         }
         else {
@@ -282,7 +283,7 @@ class Settings {
             GameInProgress = false;
             lcd.setCursor(0, 0);
             lcd.print("Game Over - White Wins");
-            Data_OUT.SendData("TimeOut", "True");
+            dataOut.SendData("TimeOut", "True");
           }
         }
         else {
@@ -293,7 +294,7 @@ class Settings {
     }
 };
 
-/* Global Variables */
+/* Class Declerations */
 Settings settings;
 OutData outdata;
 
@@ -315,20 +316,20 @@ void setup() {
   pinMode(downButton, INPUT_PULLUP);
 
   // Board State Pins
-  for (int thisPin_sensor = 0; thisPin_sensor < 8; thisPin_sensor++) {
+  for (int sensorPin = 0; sensorPin < 8; sensorPin++) {
     // initialize the output/input pins for sensor matrix:                            // set sensor output pins
-    pinMode(sensor_cols_pins[thisPin_sensor], INPUT);                                 // columns will be read for high signal
-    pinMode(sensor_rows_pins[thisPin_sensor], OUTPUT);                                // a row will be set to HIGH one at a time for reading
+    pinMode(sensorColPins[sensorPin], INPUT);                                 // columns will be read for high signal
+    pinMode(sensorRowPins[sensorPin], OUTPUT);                                // a row will be set to HIGH one at a time for reading
     // sensor setup done
   }
-  for (int thisPinLED = 0; thisPinLED < 8; thisPinLED++) {
+  for (int LEDPin = 0; LEDPin < 8; LEDPin++) {
     // initialize the output pins for LED matrix:
-    pinMode(LED_col_R_pins[thisPinLED], OUTPUT);                                 // set LED output pins
-    pinMode(LED_col_G_pins[thisPinLED], OUTPUT);
-    pinMode(LED_row_pins[thisPinLED], OUTPUT);
+    pinMode(LEDColPins_R[LEDPin], OUTPUT);                                 // set LED output pins
+    pinMode(LEDColPins_G[LEDPin], OUTPUT);
+    pinMode(LEDRowPins[LEDPin], OUTPUT);
     // take the col pins (i.e. the cathodes) high to ensure that
     // the LEDS are off:
-    digitalWrite(LED_row_pins[thisPinLED], HIGH);    // turns off LEDs
+    digitalWrite(LEDRowPins[LEDPin], HIGH);    // turns off LEDs
   }
 
   /* Variable Initialization */
@@ -342,6 +343,25 @@ void setup() {
 }
 
 void loop() {
+    /*
+    *   Multiple Paths to Take:
+    *   1. If the game is in progress and is not paused
+    *       a. Check for the pause button being pressed (denyButton)
+    *       b. If the timer is not inf length tick it down if a second has passed
+    *       c. Check if a end move button has been pressed (whiteButton, BlackButton)
+    *       d. Check for serial data, then process it depending on what it is
+    *       e. Check the board state, if something changed let the python side know
+    *       f. Important: When the user is happy with their move, they must press 
+               the end move button to inform that their turn has ended
+    *   2. If the game is in progress and is paused
+    *       a. Check for user inputs, the user can either resume or quit
+    *       b. If the user resumes, unpause the game and display the in-game screen
+    *       c. If the user quits, tell the python why the game is done
+    *   3. If the game is not in progress
+    *       a. Check for user inputs, depending on the screen a corresponding action will be completed
+    *          As the user changes settings update the variables in the settings class.
+    *          This way, we can send these values to the game engine on the python side
+    */
   if (settings.GameInProgress && !settings.IsPaused) {
     if (!digitalRead(denyButton)) {
       PrintLog("Paused");
@@ -365,11 +385,11 @@ void loop() {
       settings.IsWhitesTurn = !settings.IsWhitesTurn;
       while (!digitalRead(WhiteButton));
     }
-    receive_data;     // Read serial port for data from python
+    ReceiveData;     // Read serial port for data from python
 
-    read_current_board_state;       // Read the current board state
+    ReadCurrentBoardState;       // Read the current board state
 
-    compare_board_states;       // Find out how the board state changed
+    CompareBoardStates;       // Find out how the board state changed
   }
   else if (settings.GameInProgress && settings.IsPaused) {
     if (!digitalRead(upButton)) {
@@ -579,26 +599,26 @@ void ChangeLEDState(int *Array, bool state, int count = 8) {
   }
 }
 
-void read_current_board_state() {
+void ReadCurrentBoardState() {
   // iterate over the rows:
-  for (int row_now = 0; row_now < 8; row_now++) {
-    ChangeLEDState(sensor_rows_pins, false);              // set all rows to low
+  for (int rowNow = 0; rowNow < 8; rowNow++) {
+    ChangeLEDState(sensorRowPins, false);              // set all rows to low
 
-    digitalWrite(sensor_rows_pins[row_now], HIGH);                  // set rows HIGH one at a time to start scanning
+    digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
     delay(200);
 
-    for (int col_now = 0; col_now < 8; col_now++) {
-      current_sensor_board_state[row_now][col_now] = {digitalRead(sensor_cols_pins[col_now])};
+    for (int colNow = 0; colNow < 8; colNow++) {
+      CurrentSensorBoardState[rowNow][colNow] = {digitalRead(sensorColPins[colNow])};
     }
   }
 }
 
 
-void compare_board_states() {
+void CompareBoardStates() {
   String data;
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
-      int difference = current_sensor_board_state[row][col] - last_sensor_board_state[row][col];
+      int difference = CurrentSensorBoardState[row][col] - LastSensorBoardState[row][col];
       switch (difference) {
         case -1 :
         // Piece Picked Up
@@ -616,7 +636,7 @@ void compare_board_states() {
       }
     }
   }
-  last_sensor_board_state[8][8] = current_sensor_board_state;
+  LastSensorBoardState[8][8] = CurrentSensorBoardState;
 }
 
 int rowMoves[21];
@@ -650,14 +670,15 @@ void WipeArray() {
 }
 
 void LEDScan(bool isGreen, bool isRed) {
+  WipeArray();
   int maxMoves = ParseData();
-  ChangeLEDState(LED_row_pins, true);
+  ChangeLEDState(LEDRowPins, true);
   for (int i = 0; i < maxMoves; i++) {
-    turn_on_LEDs(rowMoves[i], colMoves[i], isGreen, isRed);
+    TurnOnLEDs(rowMoves[i], colMoves[i], isGreen, isRed);
   }
 }
 
-void receive_data() {                                     // if statements for boolean data
+void ReceiveData() {                                     // if statements for boolean data
   if (Serial.available() > 0) {
     if (Serial.find("LegalMoves:")) {
       LEDScan(true, false);
@@ -674,8 +695,8 @@ void receive_data() {                                     // if statements for b
   }
 }
 
-void turn_on_LEDs(int row, int col, bool isGreen, bool isRed) {
-  digitalWrite(LED_row_pins[row], LOW);
-  digitalWrite(LED_col_G_pins[col], isGreen);
-  digitalWrite(LED_col_R_pins[col], isRed);
+void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
+  digitalWrite(LEDRowPins[row], LOW);
+  digitalWrite(LEDColPins_G[col], isGreen);
+  digitalWrite(LEDColPins_R[col], isRed);
 }
