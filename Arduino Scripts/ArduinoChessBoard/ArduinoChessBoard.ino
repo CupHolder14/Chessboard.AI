@@ -1,8 +1,14 @@
+/*
+ * 
+ * Library Imports, Class Declarations, and Variable Initializations
+ * 
+ */
+
 /* Libraries */
 #include <LiquidCrystal_I2C.h>
 
 /* Debugging Variables */
-bool DEBUGGING = false;
+bool DEBUGGING = true;
 
 /* Pin Variables */
 // LCD PINS
@@ -18,6 +24,10 @@ int LEDColPins_R[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns 
 int LEDColPins_G[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns (Green)
 int sensorRowPins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
 int sensorColPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
+// Board State Arrays
+int rowMoves[21];
+int colMoves[21];
+
 
 /* Global Variables */
 // LCD Variables
@@ -39,7 +49,9 @@ String AiDifficultyMenu[] = {"    < Easy >", "Confirm"};              // 7
 
 
 // Board State Variables
-int CurrentSensorBoardState[8][8];       // Array to assign the current board state to
+// Array to assign the current board state to
+int CurrentSensorBoardState[8][8];
+
 int LastSensorBoardState[8][8] =
 { {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1},
@@ -298,6 +310,15 @@ class Settings {
 Settings settings;
 OutData outdata;
 
+
+
+/*
+ * 
+ * Microcontroller Pin Setup and Initialization
+ * 
+ */
+
+
 // Initializing Arduino Pins
 void setup() {
   // Begin Serial Port on Buad Rate 9600
@@ -342,6 +363,14 @@ void setup() {
   currentMenu = 0;
 }
 
+
+
+/*
+ * 
+ * Main Loop
+ * 
+ */
+
 void loop() {
     /*
     *   Multiple Paths to Take:
@@ -362,6 +391,13 @@ void loop() {
     *          As the user changes settings update the variables in the settings class.
     *          This way, we can send these values to the game engine on the python side
     */
+
+/*
+ * 
+ * LCD Start-up 
+ * 
+ */
+ 
   if (settings.GameInProgress && !settings.IsPaused) {
     if (!digitalRead(denyButton)) {
       PrintLog("Paused");
@@ -385,12 +421,32 @@ void loop() {
       settings.IsWhitesTurn = !settings.IsWhitesTurn;
       while (!digitalRead(WhiteButton));
     }
-    ReceiveData;     // Read serial port for data from python
 
-    ReadCurrentBoardState;       // Read the current board state
 
-    CompareBoardStates;       // Find out how the board state changed
+/*
+ * 
+ * Row/Col Scanning Processes Called Here
+ * 
+ */
+
+    ReadCurrentBoardState();       // Read the current board state
+    delay(10);
+    
+    CompareBoardStates();       // Find out how the board state changed
+    delay(10);
+
+    ReceiveData();     // Read serial port for data from python
+    delay(10);
+
+
   }
+  
+/*
+ * 
+ * LCD Menu Screen and Button Control
+ * 
+ */
+  
   else if (settings.GameInProgress && settings.IsPaused) {
     if (!digitalRead(upButton)) {
       if (menuIndex != 1) {
@@ -587,14 +643,16 @@ void WriteToScreen(String title, String options[]) {
   lcd.print(">");
 }
 
-void PrintLog(String log) {
-  if (DEBUGGING) {
-    Serial.println(log);
-  }
-}
 
-void ChangeLEDState(int *Array, bool state, int count = 8) {
-  for (int i = 0; i <= count; i++) {
+
+/*
+ * 
+ * Board State Functions
+ * 
+ */
+
+void ChangeState(int *Array, bool state, int count = 8) {
+  for (int i = 0; i < count; i++) {
     digitalWrite(Array[i], state);
   }
 }
@@ -602,15 +660,19 @@ void ChangeLEDState(int *Array, bool state, int count = 8) {
 void ReadCurrentBoardState() {
   // iterate over the rows:
   for (int rowNow = 0; rowNow < 8; rowNow++) {
-    ChangeLEDState(sensorRowPins, false);              // set all rows to low
-
+    ChangeState(sensorRowPins, false);                          // set all rows to low
     digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
-    delay(200);
 
     for (int colNow = 0; colNow < 8; colNow++) {
-      CurrentSensorBoardState[rowNow][colNow] = {digitalRead(sensorColPins[colNow])};
+      CurrentSensorBoardState[rowNow][colNow] = digitalRead(sensorColPins[colNow]); // reads sensor value and assigns to position in array
+      //Serial.print(CurrentSensorBoardState[rowNow][colNow]);               // use this to access the values in serial monitor
+      if (CurrentSensorBoardState[rowNow][colNow] == 1) {
+        TurnOnLEDs(rowNow,colNow,true,false); 
+        }
     }
+    //Serial.println();
   }
+    //Serial.println();
 }
 
 
@@ -619,29 +681,18 @@ void CompareBoardStates() {
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
       int difference = CurrentSensorBoardState[row][col] - LastSensorBoardState[row][col];
-      switch (difference) {
-        case -1 :
-        // Piece Picked Up
-          data = "(" + String(row) + "," + String(col) + ")";
-          outdata.SendData("InitialTile", data);
-          break;
-        case 0 :
-        // Nothing happened
-          break;
-        case 1 :
-        // Piece Moved
-          data = "(" + String(row) + "," + String(col) + ")";
-          outdata.SendData("NextTile", data);
-          break;
+      LastSensorBoardState[row][col] = CurrentSensorBoardState[row][col];
+      if(difference == -1){
+        data = "(" + String(row) + "," + String(col) + ")";             // Piece Picked Up
+        outdata.SendData("InitialTile", data);
+      }
+      else if(difference == 1){
+        data = "(" + String(row) + "," + String(col) + ")";             // Piece Moved
+        outdata.SendData("NextTile", data);
       }
     }
   }
-  LastSensorBoardState[8][8] = CurrentSensorBoardState;
 }
-
-int rowMoves[21];
-int colMoves[21];
-// [(5,3),(4,3)]
 
 int ParseData() {
   int j = 99;
@@ -672,7 +723,7 @@ void WipeArray() {
 void LEDScan(bool isGreen, bool isRed) {
   WipeArray();
   int maxMoves = ParseData();
-  ChangeLEDState(LEDRowPins, true);
+  // 5,3 4,2
   for (int i = 0; i < maxMoves; i++) {
     TurnOnLEDs(rowMoves[i], colMoves[i], isGreen, isRed);
   }
@@ -690,13 +741,32 @@ void ReceiveData() {                                     // if statements for bo
       LEDScan(false, true);
     }
     else {
-      LEDScan(false, false);
+      // LEDScan(false, false);
     }
   }
 }
 
 void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
-  digitalWrite(LEDRowPins[row], LOW);
+  ChangeState(LEDRowPins, true);
+  ChangeState(LEDColPins_G, false);
+  ChangeState(LEDColPins_R, false);
+  digitalWrite(LEDRowPins[row], false);
   digitalWrite(LEDColPins_G[col], isGreen);
   digitalWrite(LEDColPins_R[col], isRed);
+  ChangeState(LEDRowPins, true);
+  ChangeState(LEDColPins_G, false);
+  ChangeState(LEDColPins_R, false);
+}
+
+
+/*
+ * 
+ * Debugging Functions
+ * 
+ */
+ 
+void PrintLog(String log) {
+  if (DEBUGGING) {
+    Serial.println(log);
+  }
 }

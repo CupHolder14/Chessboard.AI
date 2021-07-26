@@ -1,3 +1,4 @@
+from pygame.constants import WINDOWSHOWN
 import SerialCommunication as SC
 import ChessEvents
 import engine
@@ -90,13 +91,13 @@ def main():
                 elif event == "Quit":  #If we're quitting, then just stop it entirely
                     print(value)
                     running = False
-                #InitialTile:(2,2)
+
                 elif event == "InitialTile" and ChessEvents.LastEvent != "InitialTile": #If a tile is picked up that is the same as "MouseButtonDown in PyGame"
                     if PlayerTurn and not GameOver and (len(tile_sequence) == 0): 
                         selected_tile = value
                         print("Selected Tile:" + str(selected_tile))
                         tile_sequence.append(selected_tile)
-
+                        print(tile_sequence)
                         '''GREEN MOVE SCANNER'''
                         for i in legal_moves:
                             if i.getChessNotation() not in legal_moves_refmt:
@@ -105,15 +106,16 @@ def main():
                         for j in legal_moves_refmt:
                             if j[0] == selected_tile:
                                 GreenMoves.append(j[1])
-                        SC.WriteSerial("LegalMoves:",str(SendMove)) #Sends Helen a Green LED Opcode at those positions
+                        #SC.WriteSerial("LegalMoves:",str(GreenMoves)) #Sends Helen a Green LED Opcode at those positions
                         GreenMoves = []
-
                     else:
-                        PrintError("InitialTile Error") #If there is any issue, just print an error for diagnosis
+                        PrintError("Already an Initial Tile in Queue") #If there is any issue, just print an error for diagnosis
 
-                elif event == "NextTile":
+
+                elif event == "NextTile" and ChessEvents.LastEvent == "InitialTile":
                     if PlayerTurn and not GameOver and (len(tile_sequence) != 0):
                         selected_tile = value
+                        print("Selected Tile:" + str(selected_tile))
                         if selected_tile == tile_sequence[0]: #We want to store our row and col values, if they are already being stored, then it means the same square was clicked twice.
                             selected_tile = () #If we pick up a piece and put it back down, flush the tuple
                             tile_sequence = [] #Our tile sequence should be reset as well
@@ -130,14 +132,17 @@ def main():
                                     #print(selected_tile)
                                     if game.in_check(): 
                                         print('Check!')   
-                                        SC.WriteSerial("Check:","True") #Sends Majed Check Flag
+                                        #SC.WriteSerial("Check:","True") #Sends Majed Check Flag
+                                    
                                     selected_tile = () #reset selected_tile if it was a legal move
                                     tile_sequence = [] #reset tile_sequence if it was a legal move
                                     get_new_legal_moves = True #set our flag to true so we can recalculate new legal moves for that player
+                                    AITurn = True
                             if not get_new_legal_moves: #If a legal move isn't passed, then the flag is never activated
                                 print("ILLEGAL MOVE")
                                 tile_sequence = [tile_sequence[0]] #if a valid move was not made, our program will ignore the second click and retain the first click. (purely for improving UI experience)
-                                SC.WriteSerial("IllegalMove",str(selected_tile)) #Sends Helen a red LED Opcode
+                                #SC.WriteSerial("IllegalMove",str(selected_tile)) #Sends Helen a red LED Opcode
+                                
                                 #Ignore the next "InitialTile" event?
                     else:
                         PrintError("Select an Initial Tile First!")
@@ -151,14 +156,46 @@ def main():
                 AIMove = AI.FindBestMoveMinMax(game, legal_moves)
                 if AIMove is None:
                     AIMove = AI.findRandomMove(legal_moves)
-                game.make_move(AIMove)
-
                 SendMove = AIMove.getChessNotation() 
-                SC.WriteSerial("AIMove",str(SendMove)) #Sends Helen a red LED Opcode
+                #SC.WriteSerial("AIMove",str(SendMove)) #Sends Helen a red LED Opcode
+                print(SendMove)
+                while AITurn:
+                    SC.ReadSerial() #Read for events 
+                    event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
+                    print(ChessEvents.LastEvent)
+                    if event == "InitialTile" and ChessEvents.LastEvent != "InitialTile": #If a tile is picked up that is the same as "MouseButtonDown in PyGame"
+                        if not GameOver and (len(tile_sequence) == 0):
+                            selected_tile = value
+                            if selected_tile == SendMove[0]:
+                                tile_sequence.append(selected_tile)
+                            else:
+                                print("Incorrect AI Piece, Please try again")
 
+                    elif event == "NextTile" and ChessEvents.LastEvent == "InitialTile":
+                        selected_tile = value
+                        print(selected_tile)
+                        if selected_tile == tile_sequence[0]: #We want to store our row and col values, if they are already being stored, then it means the same square was clicked twice.
+                            print("nah")
+                            selected_tile = () #If we pick up a piece and put it back down, flush the tuple
+                            tile_sequence = [] #Our tile sequence should be reset as well
+                        else:
+                            tile_sequence.append(selected_tile) #Tile sequence is 2 at this point always
+                            print("Tile Sequence:" + str(tile_sequence))
+                            move = engine.Move(tile_sequence[0],tile_sequence[1],game.boardstate)
+                            if move == AIMove:
+                                print("ready to move to next turn")
+                                game.make_move(AIMove)
+                                selected_tile = () #reset selected_tile if it was a legal move
+                                tile_sequence = [] #reset tile_sequence if it was a legal move    
+                                AITurn = False    
+                            else:
+                                tile_sequence = tile_sequence[0]
+                                print("Invalid Piece Position")
+                    ChessEvents.LastEvent = event  #Store the LastEvent variable here.
+                UpdateUI()
                 if game.in_check(): 
                     print('Check!')
-                    SC.WriteSerial("Check:","True") #Sends Majed Check Flag
+                    #SC.WriteSerial("Check:","True") #Sends Majed Check Flag
                 get_new_legal_moves = True
 
 

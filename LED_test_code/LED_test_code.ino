@@ -1,8 +1,7 @@
-int LED_row_pins[8] = {22, 23, 27, 49, 28, 45, 43, 25}; // pins for LED rows
-int LED_col_R_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Red)
-int LED_col_G_pins[8] = {47, 41, 51, 39, 26, 53, 24, 29}; // pins for LED columns (Green)
 
-
+int LED_row_pins[8] = {13, 12, 11, 10, 9, 8, 7, 6}; // pins for LED rows
+int LED_col_R_pins[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns (Red)
+int LED_col_G_pins[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns (Green)
 
 void setup() {
   // put your setup code here, to run once:
@@ -34,7 +33,7 @@ for (int row_LED = 0; row_LED < 8; row_LED++) {     // iterate over LED rows to 
 
     digitalWrite(LED_row_pins[row_LED], LOW);
 
-    delay(1000);
+    delay(75);
 
 
     for (int col_LED = 0; col_LED < 8; col_LED++) {
@@ -58,10 +57,10 @@ for (int row_LED = 0; row_LED < 8; row_LED++) {     // iterate over LED rows to 
       digitalWrite(LED_col_G_pins[6], LOW);
       digitalWrite(LED_col_G_pins[7], LOW);
 
+        digitalWrite(LED_col_G_pins[col_LED], HIGH);     // col_LED needs to be linked to coordinates from JOE
         digitalWrite(LED_col_R_pins[col_LED], HIGH);     // col_LED needs to be linked to coordinates from JOE
   
-        digitalWrite(LED_col_R_pins[col_LED], HIGH);
-  
+  delay(100);
       }
 
     }

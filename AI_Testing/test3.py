@@ -54,6 +54,11 @@
 # x = '(1,2)'
 # print(x)
 
-x = 'OPCODE:\r\n'
+queue = [(1,2),(2,3)]
+tile = (2,3)
 
-print(bool((x.strip().split(':'))[1]))
+if tile in queue:
+    queue.pop(tile)
+    print(queue)
+else:
+    print("no")

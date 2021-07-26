@@ -21,12 +21,10 @@ def ReadSerial():
                 return
 
             if "InitialTile:" in DATA:
-                print(DATA)
                 ParseAppend(DATA,eval)
                 return
 
             if "NextTile:" in DATA:
-                print(DATA)
                 ParseAppend(DATA,eval)
                 return
 
