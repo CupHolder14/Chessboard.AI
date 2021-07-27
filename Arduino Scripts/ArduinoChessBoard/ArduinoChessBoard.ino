@@ -1,14 +1,38 @@
 /*
+ *  ArduinoChessBoard
+ *  
+ *  Created to control the operation of LEDs and Sensors underneath the chessboard.
+ *  Also used to control the LCD interface
+ * 
+ *  Layers of the project:
+ *  - LCD Interface
+ *    -> Displays Timer, play screen, settings screen, etc.
+ *  - Buttons
+ *    -> Controls LCD interface
+ *    -> Controls player timers
+ *    -> Controls pause game button
+ *  - Sensors
+ *    -> Senses magnets indicating a piece is above
+ *    -> Detects changes in the boardstate, ex. piece lifted, piece placed
+ *  - LEDs
+ *    -> Indicate which moves are legal, illegal, AI moves
+ *    
+ *    Created 2021
+ *    by Majed Elsaadi and Helen Mulugeta
+*/
+
+
+/*
  * 
  * Library Imports, Class Declarations, and Variable Initializations
  * 
- */
-
-/* Libraries */
-#include <LiquidCrystal_I2C.h>
+*/
 
 /* Debugging Variables */
 bool DEBUGGING = true;
+
+/* Libraries */
+#include <LiquidCrystal_I2C.h>
 
 /* Pin Variables */
 // LCD PINS
@@ -18,6 +42,8 @@ int acceptButton = A12;
 int denyButton = A10;
 int WhiteButton = A8  ;
 int BlackButton = A14;
+// LCD Address Location
+LiquidCrystal_I2C lcd(0x27, 20, 4);         // Set address line for the 20x4 LCD Screen
 // Board State Pins
 int LEDRowPins[8] = {13, 12, 11, 10, 9, 8, 7, 6}; // pins for LED rows
 int LEDColPins_R[8] = {22, 23, 24, 25, 26, 27, 28, 29}; // pins for LED columns (Red)
@@ -25,13 +51,11 @@ int LEDColPins_G[8] = {32, 33, 34, 35, 36, 37, 38, 39}; // pins for LED columns 
 int sensorRowPins[8] = {51, 50, 49, 48, 47, 46, 45, 44};   // pins for the sensor rows
 int sensorColPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7}; // pins for the sensor columns
 // Board State Arrays
-int rowMoves[21];
-int colMoves[21];
+int rowMoves[27];
+int colMoves[27];
 
 
 /* Global Variables */
-// LCD Variables
-LiquidCrystal_I2C lcd(0x27, 20, 4);         // Set address line for the 20x4 LCD Screen
 
 int currentMenu;
 int menuIndex;
@@ -41,7 +65,6 @@ int maxIndex;
 String mainMenu[] = {"Play", "Settings"};                             // 0
 String playMenu[] = {"Vs. AI", "Vs. Player"};                         // 1
 String settingsMenu[] = {"Timer Length", "AI Difficulty"};            // 2
-String ChangeSideMenu[] = {"White", "Black"};                         // 3
 String pauseMenu[] = {"Resume", "Quit"};                              // 4
 String AcceptMenu[] = {"Yes", "No"};                                  // 5
 String TimerLengthMenu[] = {"    < 10 mins >", "Confirm"};            // 6
@@ -244,8 +267,6 @@ class Settings {
           lcd.print(mins + ":" + "00 " + mins + ":" + "00");
         }
       }
-      lcd.setCursor(0, 3);
-      lcd.print("Last Move");
 
       if (againstAI) {
         dataOut.SendData("VsHuman", "");
@@ -476,6 +497,7 @@ void loop() {
           currentMenu = 0;
           settings.GameInProgress = false;
           settings.IsPaused = false;
+          ResetInitalBoardState();
           outdata.SendData("Quit", "True");
           WriteToScreen("Classical Chess", mainMenu);
           break;
@@ -528,13 +550,15 @@ void loop() {
               currentMenu = 3;
               menuIndex = 1;
               settings.AgainstAI = true;
-              settings.StartGame(settings.AgainstAI);
+              CheckInitalization();
+              // settings.StartGame(settings.AgainstAI);
               break;
             case 2:
               currentMenu = 3;
               menuIndex = 1;
               settings.AgainstAI = false;
-              settings.StartGame(settings.AgainstAI);
+              CheckInitalization();
+              //settings.StartGame(settings.AgainstAI);
               break;
           }
           break;
@@ -552,6 +576,10 @@ void loop() {
               WriteToScreen("AI Difficulty", AiDifficultyMenu);
               break;
           }
+          break;
+        case 3:
+          CheckInitalization();
+          settings.StartGame(settings.AgainstAI);
           break;
         case 6:
           switch (menuIndex) {
@@ -643,7 +671,38 @@ void WriteToScreen(String title, String options[]) {
   lcd.print(">");
 }
 
+void ClearLine(int line){
+  lcd.setCursor(0,line);
+  lcd.print("                    ");
+}
 
+void ResetInitalBoardState(){
+  for(int i = 0; i < 8; i++){
+    if(i == 0 || i == 1 || i == 6 || i == 7){
+      for(int j = 0; j < 8; j++){
+        LastSensorBoardState[i][j] = 1;
+      }
+    }
+    else{
+      for(int j = 0; j < 8; j++){
+        LastSensorBoardState[i][j] = 0;
+      }
+    }
+  }
+}
+
+void DisplayMessage(String message){
+  /*
+   * Displays message on bottom row of LCD, also blinks the message
+   */
+  for(int i = 0; i < 2; i++){
+    lcd.setCursor(0,3);
+    lcd.print("                    ");
+    lcd.setCursor(0,3);
+    lcd.print(message);
+    delay(40);
+  }
+}
 
 /*
  * 
@@ -694,10 +753,14 @@ void CompareBoardStates() {
   }
 }
 
-int ParseData() {
+int ParseTileData() {
+  for (int i = 0; i < 54; i++) {    // Wipe rowMoves and colMoves arrays
+    rowMoves[i] = 99;
+    colMoves[i] = 99;
+  }
   int j = 99;
   int index = 0;
-  for (int i = 0; i < 42; i++) {
+  for (int i = 0; i < 54; i++) {
     j = Serial.parseInt();
     if (j != 99) {
       if (i % 2 == 0) {
@@ -713,35 +776,62 @@ int ParseData() {
   return index;
 }
 
-void WipeArray() {
-  for (int i = 0; i < 21; i++) {
-    rowMoves[i] = 99;
-    colMoves[i] = 99;
-  }
-}
-
-void LEDScan(bool isGreen, bool isRed) {
-  WipeArray();
-  int maxMoves = ParseData();
-  // 5,3 4,2
-  for (int i = 0; i < maxMoves; i++) {
+void LEDScan(int indexes, bool isGreen, bool isRed) {
+  for (int i = 0; i < indexes; i++) {
     TurnOnLEDs(rowMoves[i], colMoves[i], isGreen, isRed);
   }
 }
 
-void ReceiveData() {                                     // if statements for boolean data
-  if (Serial.available() > 0) {
-    if (Serial.find("LegalMoves:")) {
-      LEDScan(true, false);
+void ReceiveData(){
+  /*
+   * Receives the data sent from the python code.
+   * If any data is avaliable check the Opcode sent and perform the required procedure
+   */
+  if(Serial.available() > 0) {
+    if(Serial.find("LegalMoves:")) {
+      /* Can be sent up to 27 coordinates */
+      int maxMoves = ParseTileData();
+      LEDScan(maxMoves, true, false);
+      DisplayMessage("Showing legal Moves");
     }
-    else if (Serial.find("AIMove:")) {                // 2 coordinates will be sent
-      LEDScan(true, true);
+    else if(Serial.find("AIMove:")){
+      /* Can be sent up to 2 coordinates */
+      int maxMoves = ParseTileData();
+      LEDScan(maxMoves, true, true);
     }
-    else if (Serial.find("IllegalMove:")) {             // 1 coordinate will be sent
-      LEDScan(false, true);
+    else if(Serial.find("IllegalMove:")){
+      /* Can be sent up to 2 coordinates */
+      int maxMoves = ParseTileData();
+      LEDScan(maxMoves, false, true);
+      DisplayMessage("Showing the AIs move");
+    }
+    else if(Serial.find("Check:")){
+      /* Can be sent up to 2 coordinates */
+      int maxMoves = ParseTileData();
+      LEDScan(maxMoves, false, true);
+      DisplayMessage("King is in check!");
+    }
+    else if(Serial.find("Winner:")){
+      int winner = Serial.parseInt();
+      if(winner == 0){
+        DisplayMessage("White player wins!");
+      }
+      else if(winner == 1){
+        DisplayMessage("Black player wins!");
+      }
+      else if(winner == 2){
+        DisplayMessage("Stalemate!");
+      }
+      else{
+        Serial.println("Error, wrong int 'winner' from python");
+        return;
+      }
+      settings.GameInProgress = false;
+      settings.IsPaused = true;
+      ResetInitalBoardState();
     }
     else {
-      // LEDScan(false, false);
+      // Opcode was not recognized
     }
   }
 }
@@ -757,6 +847,73 @@ void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
   ChangeState(LEDColPins_G, false);
   ChangeState(LEDColPins_R, false);
 }
+
+void CheckInitalization(){ 
+  int checkSum = 0;
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Checking BoardState!");
+  lcd.setCursor(0,1);
+  lcd.print("Not Ready!");
+
+    while(checkSum != 32){
+      checkSum = 0;
+      for (int rowNow = 0; rowNow < 8; rowNow++) {
+        if(rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7){
+          ChangeState(sensorRowPins, false);                          // set all rows to low
+          digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
+          for (int colNow = 0; colNow < 8; colNow++) {
+            if(digitalRead(sensorColPins[colNow]) == 1){
+              checkSum++;
+            }
+          }
+        }
+      }
+      
+      bool incorrectPlacement;
+      for (int rowNow = 0; rowNow < 8; rowNow++) {
+        if(rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7){
+          ChangeState(sensorRowPins, false);                          // set all rows to low
+          digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
+          for (int colNow = 0; colNow < 8; colNow++) {
+            if(digitalRead(sensorColPins[colNow]) == 0){
+              incorrectPlacement = true;
+              delay(100);
+              ClearLine(2);
+              lcd.setCursor(1,2);
+              lcd.print("Incorrect Placement");
+              ClearLine(3);
+              lcd.setCursor(1,3);
+              String s = String(rowNow);
+              String location = "At: (" + String(rowNow) + "," + String(colNow) + ")";
+              lcd.print(location);
+              ChangeState(LEDRowPins, true);
+              ChangeState(LEDColPins_G, false);
+              ChangeState(LEDColPins_R, false);
+              digitalWrite(LEDRowPins[rowNow], false);
+              digitalWrite(LEDColPins_R[colNow], true);
+              while(incorrectPlacement){
+                if (digitalRead(sensorColPins[colNow]) == 1) {
+                  incorrectPlacement = false;
+                  ChangeState(LEDRowPins, true);
+                  ChangeState(LEDColPins_G, false);
+                  ChangeState(LEDColPins_R, false);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ClearLine(1);
+  ClearLine(2);
+  lcd.setCursor(1,2);
+  lcd.print("Game Ready!");
+  ClearLine(3);
+  lcd.setCursor(1,3);
+  lcd.print("Hit Accept to Start");
+}
+
 
 
 /*
