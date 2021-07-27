@@ -30,11 +30,8 @@ def main():
     Lists
     '''
     legal_moves = game.legal_move_generation() #List of all possible legal moves
-    selected_tile = () #Most recent tile selected will be placed here and used throughout the code.
     tile_sequence = [] #Stores a sequence of selected_tiles
-    GreenMoves = []
-    legal_moves_refmt = []
-    
+
     '''
     Flags
     '''
@@ -81,14 +78,57 @@ def main():
             if PlayerTurn and not GameOver:
                 SC.ReadSerial() #Read for events
                 event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
+                if event == "TimeOut": #CHANGE GameOver to TimeOut or something
+                    #Send the not player's turn to the Arduino to designate the winner
+                    SC.WriteSerial("Winner",str(not game.Player1Move)) #Sends Majed Winner Variable
+                    running = False
+                    break
+                elif event == "Quit":  #If we're quitting, then just stop it entirely
+                    print(value)
+                    running = False
+                    break
 
+                #Process a Move
+                elif event == "InitialTile": #If a tile is picked up that is the same as "MouseButtonDown in PyGame"
+                    GreenMoves, LegalMovesRefmt = GreenMoveScanner(value, legal_moves)
+                    if ChessEvents.LastEvent == "InitialTile": #If we pick up two pieces in a row, only allow a take
+                        if value in [LegalMovesRefmt[i][1] for i in range(len(LegalMovesRefmt))]: #If the second piece that is picked up is a take, then allow it
+                            print("Piece Taken Successfully")
+                        else:
+                            PutBackDown(value) #If two pieces are picked up in a row, it's not allowed, put the 2nd one back
+                    elif value in [LegalMovesRefmt[i][0] for i in range(len(LegalMovesRefmt))]: #If it was a legal move:
+                        tile_sequence.append(value)
+                        #SC.WriteSerial("LegalMoves:",str(GreenMoves)) #Sends Helen a Green LED Opcode at those positions
+                        print("Legal Piece " + str(tile_sequence))
+                    else:
+                        PutBackDown(value) #If you pick up a wrong piece, you will be forced to put it back down before continuing
 
-
+                elif event == "NextTile":
+                    if value == tile_sequence[0]: #The piece was placed in the same position
+                        print("Piece successfully re-placed, select another tile")
+                        tile_sequence = [] #Our tile sequence should be reset as well
+                    else:
+                        GreenMoves, LegalMovesRefmt = GreenMoveScanner(tile_sequence[0], legal_moves)
+                        if value in [LegalMovesRefmt[i][1] for i in range(len(LegalMovesRefmt))]: #if the 2nd tile is a legal move, allow it to be processed
+                            tile_sequence.append(value)
+                            print("Tile Sequence:" + str(tile_sequence))
+                            move = engine.Move(tile_sequence[0],tile_sequence[1],game.boardstate)
+                            game.make_move(move) #If it's a legal move, make it!
+                            if game.in_check(): 
+                                print('Check!')   
+                                #SC.WriteSerial("Check:","True") #Sends Majed Check Flag        
+                            tile_sequence = []
+                            get_new_legal_moves = True #set our flag to true so we can recalculate new legal moves for that player
+                            AITurn = True                
+                        else: #If they put it in an illegal spot, force them to put it back in the original spot
+                            PutBackDown(tile_sequence[0], value)
+                            tile_sequence = []
+                else:
+                    PrintError("Opcode Error")
                 '''
                 AI Turn
                 '''
             elif not PlayerTurn and not GameOver:
-
                 '''
                 Generates a Move
                 '''
@@ -97,27 +137,45 @@ def main():
                     AIMove = AI.findRandomMove(legal_moves)
                 SendAIMove = AIMove.getChessNotation() 
                 #SC.WriteSerial("AIMove",str(SendAIMove)) #Sends Helen a red LED Opcode
-                
+                print(SendAIMove)
+
+                '''
+                Verify the move is made
+                '''
                 while AITurn:
                     SC.ReadSerial() #Read for events 
-                    event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
+                    event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)    
                     
+                    if event == "Quit":  #If we're quitting, then just stop it entirely
+                        print(value)
+                        AITurn = False
+                        break
                     if event == "InitialTile":
                         if not GameOver:
-                            selected_tile = value
-                            if selected_tile == SendAIMove[0]:
-                                pass #successful process
+                            if value == SendAIMove[0]:
+                                print("Now Place In Correct Spot")
+                            elif value == SendAIMove[1]: #Take
+                                print("Processing Take")
                             else:
-                                pass
-                                #FREEZE IT and make them put it back down
+                                PutBackDown(value) #Freeze game and make them put it back down
+                                print("Board State Fixed, AIMove:" + str(SendAIMove))
+                    elif event == "NextTile":
+                        if not GameOver:
+                            if value == SendAIMove[1]:
+                                print("Well Done")
+                                game.make_move(AIMove)
+                                AITurn = False
+                            else:
+                                PutBackDown(SendAIMove[1],value)
+                                print("Well Done")
+                                game.make_move(AIMove)
+                                AITurn = False
+                            UpdateUI() #Optional?
+                if game.in_check(): 
+                    print('Check!')
+                    #SC.WriteSerial("Check:","True") #Sends Majed Check Flag
+                get_new_legal_moves = True         
 
-
-
-
-
-
-
-                
                 '''
                 Legal Move Generation
                 '''
@@ -131,35 +189,52 @@ def main():
 
 
 
-
-
-
-
-
-
-
 '''
 Helper Functions
 '''
 
-def PutBackDown(tile):
-    print("Incorrect Piece, Put it back in it's original spot and try again") #Send some sort of indicator to board
+def GreenMoveScanner(InitialTile, LegalMoves):
+    '''
+    Given an initial tile and a list of all legal moves, parse a list of all of the legal moves
+    '''
+    LegalMovesRefmt = []
+    GreenMoves = []
+    for i in LegalMoves:
+        if i.getChessNotation() not in LegalMovesRefmt:
+            LegalMovesRefmt.append(i.getChessNotation()) #All legal moves with respect to the initial tile
+    for j in LegalMovesRefmt:
+        if j[0] == InitialTile:
+            GreenMoves.append(j[1])                      #All legal moves' second position
+    return GreenMoves, LegalMovesRefmt
+
+def PutBackDown(OriginalTile, WrongTile = None):
+    '''
+    Force a Player to put a piece back down in it's original spot
+    '''
     MoveQueue = []
-    MoveQueue.append(tile)
-    frozen = True
-    while frozen: #function: PutBackDown
-        if (len(MoveQueue) == 0):
-            frozen = False
+    MoveQueue.append(OriginalTile)
+    WrongNextTiles = [] 
+    if WrongTile:
+        WrongNextTiles.append(WrongTile)
+    while True:
+        if (len(MoveQueue) == 0) and (len(WrongNextTiles) == 0): 
+            #Only error is if someone makes the move while holding another piece, they will have to pick up the move piece and put it back down
+            break
+        print("Put Pieces back in original spot:" + str(MoveQueue))
         SC.ReadSerial()
         event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
 
-        if event == "InitialTile":
+        if event == "InitialTile" and value not in list(WrongNextTiles):
             MoveQueue.append(value) #If they pick up another piece while holding one, add that coordinate to moves they have to undo
-        if event == "NextTile":
+        elif event == "InitialTile" and value in list(WrongNextTiles):
+            WrongNextTiles.remove(value) #Ignore the pickup and remove it from the list of WrongNextTiles
+        elif event == "NextTile":
             if value in MoveQueue:
-                frozen = False      #Break out of loop
-            if value != tile:
-                print("wrong spot, move to the correct")
+                MoveQueue.remove(value) #All is good, piece back in it's original spot
+                print("Piece: " + str(value) + " returned to it's original spot")
+            else:
+                WrongNextTiles.append(value)
+                print("wrong spot, move to the correct spot")
 
 
 def PrintError(string):
@@ -188,5 +263,3 @@ def UpdateUI():
 '''Standard Python convention for dealing with multiple scripts in one project. Main should be identified.'''
 if __name__ == "__main__":
     main()
-
-

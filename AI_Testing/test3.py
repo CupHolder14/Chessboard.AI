@@ -54,11 +54,11 @@
 # x = '(1,2)'
 # print(x)
 
-queue = [(1,2),(2,3)]
-tile = (2,3)
-
-if tile in queue:
-    queue.pop(tile)
-    print(queue)
+LegalMoves = [[(1,2),(2,3)],[(4,5),(6,7)]]
+value = (1,29)
+#print(range(len(LegalMoves)))
+if value in [LegalMoves[i][0] for i in range(len(LegalMoves))]:
+    print('true')
 else:
-    print("no")
+    print('false')
+
