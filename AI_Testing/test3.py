@@ -1,64 +1,38 @@
-# # # import time
-# # # import ChessEvents
+import SerialCommunication as SC
+import time 
+# x = input()
+# SC.WriteSerial("LegalMoves:","[(1,2), (2,2), (3,2), (4,2), (5,2)]")
+# print("sleep now")
+# time.sleep(2)
+# print("woke up")
+# SC.WriteSerial("IllegalMove:","[(5,6), (5,7)]")
 
-# # #TEST 1: Reading from ARduino
-# # # while True:
-# # #     c,r = SC.ReadSerial()
-# # #     x = ChessEvents.get(ChessEvents.events)
-# # #     print(str(c)+str(r))
-# # #     print(x)
 
-# # #TEST 2: Parsing
-# # # DATA = "opcode:True"
-# # # x = []
-# # # def ParseAppend(DATA, type):
-# # #     DATA = DATA.split(':')
-# # #     x.append(DATA[0])
-# # #     x.append(type(DATA[1]))
+# x = input()
+# SC.WriteSerial("AIMove:","[(1,2), (2,2)]")
 
-# # # ParseAppend(DATA,bool)
-# # # print(x)
+# x = input()
+# SC.WriteSerial("Check:","True")
 
-# # #TEST 3: Writing to Arduino
-# # import serial
-# # import time
-# # import ChessEvents
-# # import SerialCommunication as SC
-# # flag = False
-# # time.sleep(2) #GIVE THE ARDUINO TIME TO WAKE UP
-# # while True:
-# #     print("Writing:")
-# #     SC.WriteSerial("OPCODE","Value")
-# #     print("Writing Complete")
-# #     #DATA = SC.serialport.read(SC.serialport.in_waiting).decode('ascii')
-# #     #DATA = SC.serialport.readline().decode('ascii') #Takes forever! Why?!?!?! (After figuring that out, replace with the SC version of read)
-# #     flag = True
-# #     while flag:
-# #         #DATA = SC.serialport.read(SC.serialport.in_waiting).decode('ascii')
-# #         DATA = SC.serialport.readline().decode('ascii') #Takes forever! Why?!?!?! (After figuring that out, replace with the SC version of read)
-# #         if DATA:
-# #             print("Read Successful")
-# #             print(DATA)
-# #             print()
-# #             break
-# #     break
-# # print("absolutely done")
+# x = input()
+# SC.WriteSerial("Winner:","[1]")
 
-# #     # SC.WriteSerial("InitialMove", "(5,3)")
-# #     # SC.ReadSerial() THIS DOES NOT WORK FOR SOME REASON
-# #     #event, value = ChessEvents.get(ChessEvents.events, ChessEvents.values)
-# #     # print(event)
-# #     # print(value)
-# #     # print('done')
+def WriteSerial(OPCODE, DATA, lasttime):
+    while True:
+        thistime = time.time()
+        if thistime - lasttime >= 3:
+            print("Send!")
+            lasttime = thistime
+            break
 
-# x = '(1,2)'
-# print(x)
+lasttime = time.time()
+while True:
+    WriteSerial("Test", "test", lasttime)
+    
 
-LegalMoves = [[(1,2),(2,3)],[(4,5),(6,7)]]
-value = (1,29)
-#print(range(len(LegalMoves)))
-if value in [LegalMoves[i][0] for i in range(len(LegalMoves))]:
-    print('true')
-else:
-    print('false')
+# print('done') 
 
+# SC.WriteSerial("LegalMoves:",str(GreenMoves)) 
+# SC.WriteSerial("Check:","True") 
+# SC.WriteSerial("AIMove:",str(SendAIMove))
+# SC.WriteSerial("IllegalMove:",str()) #Sends Illegal Moves to light up red

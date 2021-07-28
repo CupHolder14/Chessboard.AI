@@ -1,8 +1,11 @@
+from pygame.time import delay
 import serial
 import ChessEvents
+import time 
 
 serialport = serial.Serial('COM4', 9600)
 serialport.timeout = 1
+lasttime = 0
 
 def ReadSerial():
     while True:
@@ -36,13 +39,19 @@ def ReadSerial():
                 ParseAppend(DATA,bool)
                 return
 
-def ReadTest(): #Reading is a work in progress still
+def ReadTest(): #work in progress still
     while True:
         DATA = serialport.readline().decode('ascii')
         return DATA
 
-def WriteSerial(OPCODE, DATA):
-    serialport.write((OPCODE+":"+DATA).encode())
+def WriteSerial(OPCODE, DATA, lasttime):
+    thistime = time.time()
+    while True:
+        if thistime - lasttime >= 3:
+            serialport.write((OPCODE+DATA+'9').encode())
+            lasttime = thistime
+            break
+    
     
 
 def ParseAppend(DATA, type):

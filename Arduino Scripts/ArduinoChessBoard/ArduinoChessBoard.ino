@@ -1,31 +1,31 @@
 /*
- *  ArduinoChessBoard
- *  
- *  Created to control the operation of LEDs and Sensors underneath the chessboard.
- *  Also used to control the LCD interface
- * 
- *  Layers of the project:
- *  - LCD Interface
- *    -> Displays Timer, play screen, settings screen, etc.
- *  - Buttons
- *    -> Controls LCD interface
- *    -> Controls player timers
- *    -> Controls pause game button
- *  - Sensors
- *    -> Senses magnets indicating a piece is above
- *    -> Detects changes in the boardstate, ex. piece lifted, piece placed
- *  - LEDs
- *    -> Indicate which moves are legal, illegal, AI moves
- *    
- *    Created 2021
- *    by Majed Elsaadi and Helen Mulugeta
+    ArduinoChessBoard
+
+    Created to control the operation of LEDs and Sensors underneath the chessboard.
+    Also used to control the LCD interface
+
+    Layers of the project:
+    - LCD Interface
+      -> Displays Timer, play screen, settings screen, etc.
+    - Buttons
+      -> Controls LCD interface
+      -> Controls player timers
+      -> Controls pause game button
+    - Sensors
+      -> Senses magnets indicating a piece is above
+      -> Detects changes in the boardstate, ex. piece lifted, piece placed
+    - LEDs
+      -> Indicate which moves are legal, illegal, AI moves
+
+      Created 2021
+      by Majed Elsaadi and Helen Mulugeta
 */
 
 
 /*
- * 
- * Library Imports, Class Declarations, and Variable Initializations
- * 
+
+   Library Imports, Class Declarations, and Variable Initializations
+
 */
 
 /* Debugging Variables */
@@ -97,8 +97,8 @@ unsigned long lastTime;
 // Data to be received
 class InData {
     // Class that houses the functions to interpret data sent to the arduino from the python side
-    public:
-    InData(){
+  public:
+    InData() {
     }
 };
 
@@ -116,10 +116,10 @@ class OutData {
 
 // Internal Settings
 class Settings {
-    // Class that houses all the internal settings 
+    // Class that houses all the internal settings
   private:
     void UpdateClock(int Mins, int Secs, bool IsWhitesTurn) {
-        // Function to update the clock in the corresponding position
+      // Function to update the clock in the corresponding position
       if (IsWhitesTurn) {
         lcd.setCursor(9, 2);
       }
@@ -134,7 +134,7 @@ class Settings {
 
   public:
     bool GameInProgress;
-    
+    int Winner;
     // Timer variables
     bool InfLength;
     bool IsPaused;
@@ -167,10 +167,11 @@ class Settings {
       this->PrevTime = 0;
       this->IsWhitesTurn = true;
       this->IsPaused = false;
+      this->Winner = 3;
     }
 
     void IncreaseTimer(String* TimerLengthMenu) {
-        // Function to increase the timer length after changing it on the settings screen
+      // Function to increase the timer length after changing it on the settings screen
       if (TimerLength == 20 && InfLength == false) {
         InfLength = true;
         TimerLengthMenu[0] = "    < unlimited >";
@@ -187,7 +188,7 @@ class Settings {
     }
 
     void IncreaseDifficulty(String* AiDifficultyMenu) {
-        // Function to increase the difficulty after changing it on the settings screen
+      // Function to increase the difficulty after changing it on the settings screen
       if (AiDifficulty == "Easy") {
         AiDifficulty = "Medium";
         AiDifficultyValue = 2;
@@ -204,7 +205,7 @@ class Settings {
     }
 
     void PauseScreen() {
-    // Displays the PauseScreen
+      // Displays the PauseScreen
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Game Paused");
@@ -217,7 +218,7 @@ class Settings {
     }
 
     void ResumeScreen() {
-    // Resets the screen to the in-game screen
+      // Resets the screen to the in-game screen
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("In Game");
@@ -277,15 +278,15 @@ class Settings {
         dataOut.SendData("VsHuman", "");
         dataOut.SendData("Difficulty", String(AiDifficultyValue));
       }
-      else{
+      else {
         dataOut.SendData("VsHuman", "True");
       }
       dataOut.SendData("StartGame", "True");
-      
+
     }
 
     void Tick() {
-        // Function to tick the clock every second. Delays are not used for efficiency
+      // Function to tick the clock every second. Delays are not used for efficiency
       if (IsWhitesTurn) {
         if (Secs_White == 0) {
           if (Mins_White != 0) {
@@ -295,9 +296,8 @@ class Settings {
           }
           else {
             // Timer Depleted for white
-            GameInProgress = false;
             lcd.setCursor(0, 0);
-            lcd.print("Game Over - Black Wins");
+            lcd.print("Gameover-Black Wins");
             dataOut.SendData("TimeOut", "True");
           }
         }
@@ -318,7 +318,6 @@ class Settings {
           }
           else {
             // Timer Depleted for black
-            GameInProgress = false;
             lcd.setCursor(0, 0);
             lcd.print("Game Over - White Wins");
             dataOut.SendData("TimeOut", "True");
@@ -339,10 +338,10 @@ OutData outdata;
 
 
 /*
- * 
- * Microcontroller Pin Setup and Initialization
- * 
- */
+
+   Microcontroller Pin Setup and Initialization
+
+*/
 
 
 // Initializing Arduino Pins
@@ -378,14 +377,12 @@ void setup() {
     // the LEDS are off:
     digitalWrite(LEDRowPins[LEDPin], HIGH);    // turns off LEDs
   }
-  for(int i = 0; i < 27; i++){
+  for (int i = 0; i < 27; i++) {
     rowMoves[i] = 9;
     colMoves[i] = 9;
   }
 
-  operation = "LegalMoves";
-  opFlag = true;
-  opIndex = 0;
+  operation = "None";
 
   /* Variable Initialization */
   menuIndex = 1;
@@ -400,38 +397,38 @@ void setup() {
 
 
 /*
- * 
- * Main Loop
- * 
- */
+
+   Main Loop
+
+*/
 
 void loop() {
-    /*
-    *   Multiple Paths to Take:
-    *   1. If the game is in progress and is not paused
-    *       a. Check for the pause button being pressed (denyButton)
-    *       b. If the timer is not inf length tick it down if a second has passed
-    *       c. Check if a end move button has been pressed (whiteButton, BlackButton)
-    *       d. Check for serial data, then process it depending on what it is
-    *       e. Check the board state, if something changed let the python side know
-    *       f. Important: When the user is happy with their move, they must press 
-               the end move button to inform that their turn has ended
-    *   2. If the game is in progress and is paused
-    *       a. Check for user inputs, the user can either resume or quit
-    *       b. If the user resumes, unpause the game and display the in-game screen
-    *       c. If the user quits, tell the python why the game is done
-    *   3. If the game is not in progress
-    *       a. Check for user inputs, depending on the screen a corresponding action will be completed
-    *          As the user changes settings update the variables in the settings class.
-    *          This way, we can send these values to the game engine on the python side
-    */
+  /*
+      Multiple Paths to Take:
+      1. If the game is in progress and is not paused
+          a. Check for the pause button being pressed (denyButton)
+          b. If the timer is not inf length tick it down if a second has passed
+          c. Check if a end move button has been pressed (whiteButton, BlackButton)
+          d. Check for serial data, then process it depending on what it is
+          e. Check the board state, if something changed let the python side know
+          f. Important: When the user is happy with their move, they must press
+             the end move button to inform that their turn has ended
+      2. If the game is in progress and is paused
+          a. Check for user inputs, the user can either resume or quit
+          b. If the user resumes, unpause the game and display the in-game screen
+          c. If the user quits, tell the python why the game is done
+      3. If the game is not in progress
+          a. Check for user inputs, depending on the screen a corresponding action will be completed
+             As the user changes settings update the variables in the settings class.
+             This way, we can send these values to the game engine on the python side
+  */
 
-/*
- * 
- * LCD Start-up 
- * 
- */
- 
+  /*
+
+     LCD Start-up
+
+  */
+
   if (settings.GameInProgress && !settings.IsPaused) {
     if (!digitalRead(denyButton)) {
       PrintLog("Paused");
@@ -457,15 +454,15 @@ void loop() {
     }
 
 
-/*
- * 
- * Row/Col Scanning Processes Called Here
- * 
- */
+    /*
+
+       Row/Col Scanning Processes Called Here
+
+    */
 
     ReadCurrentBoardState();       // Read the current board state
     delay(10);
-    
+
     CompareBoardStates();       // Find out how the board state changed
     delay(10);
 
@@ -476,13 +473,13 @@ void loop() {
 
 
   }
-  
-/*
- * 
- * LCD Menu Screen and Button Control
- * 
- */
-  
+
+  /*
+
+     LCD Menu Screen and Button Control
+
+  */
+
   else if (settings.GameInProgress && settings.IsPaused) {
     if (!digitalRead(upButton)) {
       if (menuIndex != 1) {
@@ -517,7 +514,7 @@ void loop() {
           WriteToScreen("Classical Chess", mainMenu);
           break;
       }
-      while(!digitalRead(acceptButton));
+      while (!digitalRead(acceptButton));
       delay(0.5);
     }
   }
@@ -595,6 +592,14 @@ void loop() {
         case 3:
           CheckInitalization();
           settings.StartGame(settings.AgainstAI);
+          currentMenu = 4;
+          break;
+        case 4:
+          currentMenu = 0;
+          settings.GameInProgress = false;
+          settings.IsPaused = false;
+          ResetInitalBoardState();
+          WriteToScreen("Classical Chess", mainMenu);
           break;
         case 6:
           switch (menuIndex) {
@@ -686,40 +691,40 @@ void WriteToScreen(String title, String options[]) {
   lcd.print(">");
 }
 
-void ClearLine(int line){
-  lcd.setCursor(0,line);
+void ClearLine(int line) {
+  lcd.setCursor(0, line);
   lcd.print("                    ");
 }
 
-void ResetInitalBoardState(){
-  for(int i = 0; i < 8; i++){
-    if(i == 0 || i == 1 || i == 6 || i == 7){
-      for(int j = 0; j < 8; j++){
+void ResetInitalBoardState() {
+  for (int i = 0; i < 8; i++) {
+    if (i == 0 || i == 1 || i == 6 || i == 7) {
+      for (int j = 0; j < 8; j++) {
         LastSensorBoardState[i][j] = 1;
       }
     }
-    else{
-      for(int j = 0; j < 8; j++){
+    else {
+      for (int j = 0; j < 8; j++) {
         LastSensorBoardState[i][j] = 0;
       }
     }
   }
 }
 
-void DisplayMessage(String message){
+void DisplayMessage(String message) {
   /*
-   * Displays message on bottom row of LCD, also blinks the message
-   */
+     Displays message on bottom row of LCD, also blinks the message
+  */
   ClearLine(3);
-  lcd.setCursor(0,3);
+  lcd.setCursor(0, 3);
   lcd.print(message);
 }
 
 /*
- * 
- * Board State Functions
- * 
- */
+
+   Board State Functions
+
+*/
 
 void ChangeState(int *Array, bool state, int count = 8) {
   for (int i = 0; i < count; i++) {
@@ -727,41 +732,51 @@ void ChangeState(int *Array, bool state, int count = 8) {
   }
 }
 
-void CheckLEDs(){
-  if(operation == "LegalMoves"){
-    if(opFlag){
-      lcd.print("reset");
-      ChangeState(LEDRowPins, true);
-      ChangeState(LEDColPins_G, false);
-      ChangeState(LEDColPins_R, false);
-      opFlag = false;
-    }
-    digitalWrite(LEDRowPins[rowMoves[opIndex]], false);
-    digitalWrite(LEDColPins_G[colMoves[opIndex]], true);
-    lcd.print("tik");
-    ChangeState(LEDRowPins, true);
-    ChangeState(LEDColPins_G, false);
-    opIndex = opIndex == 26 ? 0 : opIndex + 1;;
-    lcd.print(String(opIndex));
-  }
-//  for(int i = 0; i < 27; i++){
-//    if(rowMoves[i] == 9){
-//      break;
-//    }
-//    else{
-//      if(operation == "LegalMoves"){
-//        unsigned long thisTime = millis();
-//        if(thisTime - lastTime >= 1000){
-//          ChangeState(LEDRowPins, true);
-//          ChangeState(LEDColPins_G, false);
-//          ChangeState(LEDColPins_R, false);
-//          digitalWrite(LEDRowPins[rowMoves[i]], false);
-//          digitalWrite(LEDColPins_G[colMoves[i]], true);
+//void CheckLEDs(){
+//  if(operation == "LegalMoves"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],true,false);
+//          }
 //        }
 //      }
+//      if(operation == "IllegalMove"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],false,true);
+//          }
+//        }
+//      }
+//      if(operation == "AIMove"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],true,true);
+//          }
+//        }
+//      }
+//  if(operation == "LegalMoves"){
+//    if(opFlag){
+//      lcd.print("reset");
+//      ChangeState(LEDRowPins, true);
+//      ChangeState(LEDColPins_G, false);
+//      ChangeState(LEDColPins_R, false);
+//      opFlag = false;
 //    }
+//    digitalWrite(LEDRowPins[rowMoves[opIndex]], false);
+//    digitalWrite(LEDColPins_G[colMoves[opIndex]], true);
+//    lcd.print("tik");
+//    ChangeState(LEDRowPins, true);
+//    ChangeState(LEDColPins_G, false);
+//    opIndex = opIndex == 26 ? 0 : opIndex + 1;;
+//    lcd.print(String(opIndex));
 //  }
-}
+//}
+
+
+
+
+
+///
 
 void ReadCurrentBoardState() {
   // iterate over the rows:
@@ -771,22 +786,50 @@ void ReadCurrentBoardState() {
 
     for (int colNow = 0; colNow < 8; colNow++) {
       CurrentSensorBoardState[rowNow][colNow] = digitalRead(sensorColPins[colNow]); // reads sensor value and assigns to position in array
-      if(operation == "LegalMoves"){
-        for(int i = 0; i < 27; i++){
-          if(rowMoves[i] == rowNow and colMoves[i] == colNow){
-            TurnOnLEDs(rowNow,colNow,true,false);
+      if (operation == "LegalMoves") {
+        for (int i = 0; i < 27; i++) {
+          if (rowMoves[i] == rowNow and colMoves[i] == colNow) {
+            TurnOnLEDs(rowMoves[i], colMoves[i], true, false);
           }
         }
       }
-//      Serial.print(CurrentSensorBoardState[rowNow][colNow]);               // use this to access the values in serial monitor
-//      if (CurrentSensorBoardState[rowNow][colNow] == 1) {
-//        TurnOnLEDs(rowNow,colNow,true,false); 
-//        }
+      else if (operation == "IllegalMove") {
+        for (int i = 0; i < 27; i++) {
+          if (rowMoves[i] == rowNow and colMoves[i] == colNow) {
+            TurnOnLEDs(rowMoves[i], colMoves[i], false, true);
+          }
+        }
+      }
+      else if (operation == "AIMove"){
+        for (int i = 0; i < 27; i++) {
+          if (rowMoves[i] == rowNow and colMoves[i] == colNow) {
+            TurnOnLEDs(rowMoves[i], colMoves[i], true , true);
+          }
+        }
+      }
+      else if (operation == "Check") {
+        ClearLine(3);
+        lcd.setCursor(0,3);
+        lcd.print("King is in Check!");
+      }
+      else if (operation == "TurnOff"){
+        ChangeState(LEDRowPins, true);
+        ChangeState(LEDColPins_G, false);
+        ChangeState(LEDColPins_R, false);
+      }
+      
+      //      Serial.print(CurrentSensorBoardState[rowNow][colNow]);               // use this to access the values in serial monitor
+      //      if (CurrentSensorBoardState[rowNow][colNow] == 1) {
+      //        TurnOnLEDs(rowNow,colNow,true,false);
+      //        }
     }
     //Serial.println();
   }
-    //Serial.println();
+  //Serial.println();
 }
+
+///
+
 
 
 void CompareBoardStates() {
@@ -795,11 +838,11 @@ void CompareBoardStates() {
     for (int col = 0; col < 8; col++) {
       int difference = CurrentSensorBoardState[row][col] - LastSensorBoardState[row][col];
       LastSensorBoardState[row][col] = CurrentSensorBoardState[row][col];
-      if(difference == -1){
+      if (difference == -1) {
         data = "(" + String(row) + "," + String(col) + ")";             // Piece Picked Up
         outdata.SendData("InitialTile", data);
       }
-      else if(difference == 1){
+      else if (difference == 1) {
         data = "(" + String(row) + "," + String(col) + ")";             // Piece Moved
         outdata.SendData("NextTile", data);
       }
@@ -807,26 +850,107 @@ void CompareBoardStates() {
   }
 }
 
-int ParseTileData() {
-  int j = 10;
-  int index = 0;
-  for (int i = 0; i < 54; i++) {
-    j = Serial.parseInt();
-    if (j != 9) {
-      if (i % 2 == 0) {
-        rowMoves[index] = j;
-      }
-     else {
-        colMoves[index] = j;
-        index++;
-      }
-      j = 10;
+//void ParseRowCol(String content){
+//  char buff[210];
+//  content.toCharArray(buff,210);
+//  bool readData = false;
+//  int index1 = 0;
+//  int index2 = 0;
+//  for(int i = 0; i < 210; i++){
+//    if(buff[i] == '['){
+//      readData = true;
+//    }
+//    if(readData){
+//      if(buff[i] == ']'){
+//        readData = false;
+//        break;
+//      }
+//      else if(isDigit(buff[i])){
+//        int j = 9;
+//        j = buff[i].toInt();
+//        if (j != 9) {
+//          if (index2 % 2 == 0) {
+//            rowMoves[index1] = j;
+//            index2++;
+//          }
+//          else {
+//            colMoves[index1] = j;
+//            index++;
+//            index2++;
+//          }
+//          j = 9;
+//        }
+//        else {
+//          break;
+//        }
+//      }
+//    }
+//  }
+//}
+
+void WipeArrays(){
+  for(int i = 0; i < 27; i++){
+    rowMoves[i] = 9;
+    colMoves[i] = 9;
+  }
+}
+
+void ParseTileData(String content) {
+  WipeArrays();
+  char buff[210];
+  content.toCharArray(buff,210);
+  bool readData = false;
+  int index1 = 0;
+  int index2 = 0;
+  for(int i = 0; i < 210; i++){
+    if(buff[i] == '['){
+      readData = true;
     }
-    else{
-      break;
+    if(readData){
+      if(buff[i] == ']'){
+        readData = false;
+        break;
+      }
+      else if(isDigit(buff[i])){
+        int j = 9;
+        j = buff[i] - '0';
+        if (j != 9) {
+          if (index2 % 2 == 0) {
+            rowMoves[index1] = j;
+            index2++;
+          }
+          else {
+            colMoves[index1] = j;
+            index1++;
+            index2++;
+          }
+          j = 9;
+        }
+        else {
+          break;
+        }
+      }
     }
   }
-  return index;
+  
+//  int j = 10;
+//  int index = 0;
+//  for (int i = 0; i < 54; i++) {
+//    j = Serial.parseInt();
+//    if (j != 9) {
+//      if (i % 2 == 0) {
+//        rowMoves[index] = j;
+//      }
+//      else {
+//        colMoves[index] = j;
+//        index++;
+//      }
+//      j = 10;
+//    }
+//    else {
+//      break;
+//    }
+//  }
 }
 
 void LEDScan(int indexes, bool isGreen, bool isRed) {
@@ -835,72 +959,72 @@ void LEDScan(int indexes, bool isGreen, bool isRed) {
   }
 }
 
-void ReceiveData(){
+void ReceiveData() {
   /*
-   * Receives the data sent from the python code.
-   * If any data is avaliable check the Opcode sent and perform the required procedure
-   */
-  if(Serial.available() > 0) {
-    if(Serial.find("Check:")){
-      int maxMoves = ParseTileData();
-      lcd.setCursor(0,0);
-      for(int i = 0; i < maxMoves; i++){
-        
+     Receives the data sent from the python code.
+     If any data is avaliable check the Opcode sent and perform the required procedure
+  */
+  if (Serial.available() > 0) {
+    String content = Serial.readString();    //Store the Opcode and Value as a String into this  
+    if (content.indexOf("LegalMoves:") >= 0) {
+      operation = "LegalMoves";
+      ParseTileData(content);
+    }
+    else if (content.indexOf("IllegalMove:") >= 0) {
+      operation = "IllegalMove";
+      ParseTileData(content);
+    }
+    else if (content.indexOf("AIMove:") >= 0) {
+      operation = "AIMove";
+      ParseTileData(content);
+    }
+    else if (content.indexOf("Winner:") >= 0) {
+      operation = "Winner";
+      char buff[15];
+      content.toCharArray(buff,15);
+      bool readData = false;
+      for(int i = 0; i < 15; i++){
+        if(buff[i] == '['){
+          readData = true;
+        }
+        if(readData){
+          if(buff[i] == ']'){
+            readData = false;
+            break;
+          }
+          else{
+            if(isDigit(buff[i])){
+              lcd.setCursor(0,0);
+              settings.Winner = buff[i] - '0';
+              break;
+            }
+          }
+        }
       }
+      ClearLine(0);
+      if(settings.Winner == 0){
+        lcd.setCursor(0, 0);
+        lcd.print("Gameover-White Wins");
+      }
+      else if(settings.Winner == 1){
+        lcd.setCursor(0, 0);
+        lcd.print("Gameover-Black Wins");
+      }
+      else if(settings.Winner == 2){
+        lcd.setCursor(0, 0);
+        lcd.print("Gameover-Stalemate");
+      }
+      settings.GameInProgress = false;
     }
-    else{
-      lcd.setCursor(0,0);
-      lcd.print("pppppp");
+    else if (content.indexOf("Check:") >= 0) {
+      operation = "Check";
     }
-//    if(Serial.find("LegalMoves:")) {
-//      /* Can be sent up to 27 coordinates */
-//      int maxMoves = ParseTileData();
-//      LEDScan(maxMoves, true, false);
-//      DisplayMessage("Showing legal Moves");
-//    }
-//    else if(Serial.find("AIMove:")){
-//      /* Can be sent up to 2 coordinates */
-//      int maxMoves = ParseTileData();
-//      LEDScan(maxMoves, true, true);
-//    }
-//    else if(Serial.find("IllegalMove:")){
-//      /* Can be sent up to 2 coordinates */
-//      int maxMoves = ParseTileData();
-//      LEDScan(maxMoves, false, true);
-//      DisplayMessage("Showing the AIs move");
-//    }
-//    else if(Serial.find("Check:")){
-//      /* Can be sent up to 2 coordinates */
-//      int maxMoves = ParseTileData();
-//      LEDScan(maxMoves, false, true);
-////      DisplayMessage("King is in check!");
-//      lcd.setCursor(0,0);
-//      lcd.print("SFhdfd");
-//    }
-//    else if(Serial.find("Winner:")){
-//      int winner = Serial.parseInt();
-//      if(winner == 0){
-//        DisplayMessage("White player wins!");
-//      }
-//      else if(winner == 1){
-//        DisplayMessage("Black player wins!");
-//      }
-//      else if(winner == 2){
-//        DisplayMessage("Stalemate!");
-//      }
-//      else{
-//        Serial.println("Error, wrong int 'winner' from python");
-//        return;
-//      }
-//      settings.GameInProgress = false;
-//      settings.IsPaused = true;
-//      ResetInitalBoardState();
-//    }
-//    else {
-//      
-//    }
+    else if (content.indexOf("TurnOff:") >= 0) {
+      operation = "TurnOff";
+    }
   }
 }
+
 
 void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
   ChangeState(LEDRowPins, true);
@@ -909,86 +1033,86 @@ void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
   digitalWrite(LEDRowPins[row], false);
   digitalWrite(LEDColPins_G[col], isGreen);
   digitalWrite(LEDColPins_R[col], isRed);
-  delay(1);
+  delayMicroseconds(180);
   ChangeState(LEDRowPins, true);
   ChangeState(LEDColPins_G, false);
   ChangeState(LEDColPins_R, false);
 }
 
-void CheckInitalization(){ 
+void CheckInitalization() {
   int checkSum = 0;
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   lcd.print("Checking BoardState!");
-  lcd.setCursor(0,1);
+  lcd.setCursor(0, 1);
   lcd.print("Not Ready!");
 
-    while(checkSum != 32){
-      checkSum = 0;
-      for (int rowNow = 0; rowNow < 8; rowNow++) {
-        if(rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7){
-          ChangeState(sensorRowPins, false);                          // set all rows to low
-          digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
-          for (int colNow = 0; colNow < 8; colNow++) {
-            if(digitalRead(sensorColPins[colNow]) == 1){
-              checkSum++;
-            }
+  while (checkSum != 32) {
+    checkSum = 0;
+    for (int rowNow = 0; rowNow < 8; rowNow++) {
+      if (rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7) {
+        ChangeState(sensorRowPins, false);                          // set all rows to low
+        digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
+        for (int colNow = 0; colNow < 8; colNow++) {
+          if (digitalRead(sensorColPins[colNow]) == 1) {
+            checkSum++;
           }
         }
       }
-      
-      bool incorrectPlacement;
-      for (int rowNow = 0; rowNow < 8; rowNow++) {
-        if(rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7){
-          ChangeState(sensorRowPins, false);                          // set all rows to low
-          digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
-          for (int colNow = 0; colNow < 8; colNow++) {
-            if(digitalRead(sensorColPins[colNow]) == 0){
-              incorrectPlacement = true;
-              delay(100);
-              ClearLine(2);
-              lcd.setCursor(1,2);
-              lcd.print("Incorrect Placement");
-              ClearLine(3);
-              lcd.setCursor(1,3);
-              String s = String(rowNow);
-              String location = "At: (" + String(rowNow) + "," + String(colNow) + ")";
-              lcd.print(location);
-              ChangeState(LEDRowPins, true);
-              ChangeState(LEDColPins_G, false);
-              ChangeState(LEDColPins_R, false);
-              digitalWrite(LEDRowPins[rowNow], false);
-              digitalWrite(LEDColPins_R[colNow], true);
-              while(incorrectPlacement){
-                if (digitalRead(sensorColPins[colNow]) == 1) {
-                  incorrectPlacement = false;
-                  ChangeState(LEDRowPins, true);
-                  ChangeState(LEDColPins_G, false);
-                  ChangeState(LEDColPins_R, false);
-                }
+    }
+
+    bool incorrectPlacement;
+    for (int rowNow = 0; rowNow < 8; rowNow++) {
+      if (rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7) {
+        ChangeState(sensorRowPins, false);                          // set all rows to low
+        digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
+        for (int colNow = 0; colNow < 8; colNow++) {
+          if (digitalRead(sensorColPins[colNow]) == 0) {
+            incorrectPlacement = true;
+            delay(100);
+            ClearLine(2);
+            lcd.setCursor(1, 2);
+            lcd.print("Incorrect Placement");
+            ClearLine(3);
+            lcd.setCursor(1, 3);
+            String s = String(rowNow);
+            String location = "At: (" + String(rowNow) + "," + String(colNow) + ")";
+            lcd.print(location);
+            ChangeState(LEDRowPins, true);
+            ChangeState(LEDColPins_G, false);
+            ChangeState(LEDColPins_R, false);
+            digitalWrite(LEDRowPins[rowNow], false);
+            digitalWrite(LEDColPins_R[colNow], true);
+            while (incorrectPlacement) {
+              if (digitalRead(sensorColPins[colNow]) == 1) {
+                incorrectPlacement = false;
+                ChangeState(LEDRowPins, true);
+                ChangeState(LEDColPins_G, false);
+                ChangeState(LEDColPins_R, false);
               }
             }
           }
         }
       }
     }
+  }
   ClearLine(1);
   ClearLine(2);
-  lcd.setCursor(1,2);
+  lcd.setCursor(1, 2);
   lcd.print("Game Ready!");
   ClearLine(3);
-  lcd.setCursor(1,3);
+  lcd.setCursor(1, 3);
   lcd.print("Hit Accept to Start");
 }
 
 
 
 /*
- * 
- * Debugging Functions
- * 
- */
- 
+
+   Debugging Functions
+
+*/
+
 void PrintLog(String log) {
   if (DEBUGGING) {
     Serial.println(log);
