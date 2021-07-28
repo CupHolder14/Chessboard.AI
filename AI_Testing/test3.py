@@ -17,20 +17,16 @@ import time
 # x = input()
 # SC.WriteSerial("Winner:","[1]")
 
-def WriteSerial(OPCODE, DATA, lasttime):
-    while True:
-        thistime = time.time()
-        if thistime - lasttime >= 3:
-            print("Send!")
-            lasttime = thistime
-            break
+# while True:
+#     x = input()
 
-lasttime = time.time()
-while True:
-    WriteSerial("Test", "test", lasttime)
-    
+#     SC.WriteSerial("Test:","[1]")
+#     print("Sent")
 
-# print('done') 
+MoveQueue = [(0,2),(3,3)]
+value = (2,2)
+MoveQueue.insert(0,value)
+print(MoveQueue)
 
 # SC.WriteSerial("LegalMoves:",str(GreenMoves)) 
 # SC.WriteSerial("Check:","True") 

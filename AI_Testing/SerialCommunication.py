@@ -7,7 +7,7 @@ serialport = serial.Serial('COM4', 9600)
 serialport.timeout = 1
 lasttime = 0
 
-def ReadSerial():
+def ReadSerial(stack=True):
     while True:
         DATA = serialport.readline().decode('ascii')
         if DATA:
@@ -24,11 +24,17 @@ def ReadSerial():
                 return
 
             if "InitialTile:" in DATA:
-                ParseAppend(DATA,eval)
+                if stack:
+                    ParseAppend(DATA,eval)
+                else:
+                    AppendParse(DATA,eval)
                 return
 
             if "NextTile:" in DATA:
-                ParseAppend(DATA,eval)
+                if stack:
+                    ParseAppend(DATA,eval)
+                else:
+                    AppendParse(DATA,eval)
                 return
 
             if "TimeOut:" in DATA:
@@ -43,18 +49,20 @@ def ReadTest(): #work in progress still
     while True:
         DATA = serialport.readline().decode('ascii')
         return DATA
-
-def WriteSerial(OPCODE, DATA, lasttime):
+    
+def WriteSerial(OPCODE, DATA):
     thistime = time.time()
-    while True:
-        if thistime - lasttime >= 3:
-            serialport.write((OPCODE+DATA+'9').encode())
-            lasttime = thistime
-            break
-    
-    
+    while thistime - lasttime <= 2:
+        thistime = time.time()
+    serialport.write((OPCODE+DATA+'9').encode())
+    globals()['lasttime'] = time.time()
 
 def ParseAppend(DATA, type):
     DATA = DATA.strip().split(':')
     ChessEvents.events.append(DATA[0])
     ChessEvents.values.append(type(DATA[1]))
+
+def AppendParse(DATA,type):
+    DATA = DATA.strip().split(':')
+    ChessEvents.events.insert(0,DATA[0])
+    ChessEvents.values.insert(0,type(DATA[1]))
