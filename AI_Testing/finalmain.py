@@ -105,6 +105,7 @@ def main():
                     if ChessEvents.LastEvent == "InitialTile": #If we pick up two pieces in a row, only allow a take
                         if value in [LegalMovesRefmt[i][1] for i in range(len(LegalMovesRefmt))]: #If the second piece that is picked up is a take, then allow it
                             print("Piece Taken Successfully")
+                            ChessEvents.LastEvent = event  #Store the LastEvent variable here. 
                         else:
                             print(value)
                             PutBackDown(value) #If two pieces are picked up in a row, it's not allowed, put the 2nd one back
@@ -115,6 +116,7 @@ def main():
                             tile_sequence.append(value)
                             SC.WriteSerial("LegalMoves:",str(GreenMoves)) #Sends a Green LED Opcode at those positions
                             print("Legal Piece " + str(tile_sequence))
+                            ChessEvents.LastEvent = event  #Store the LastEvent variable here. 
                         else:
                             PutBackDown(value) #If you pick up a wrong piece, you will be forced to put it back down before continuing
                         
@@ -123,6 +125,7 @@ def main():
                         print("Piece successfully re-placed, select another tile")
                         tile_sequence = [] #Our tile sequence should be reset as well
                         SC.WriteSerial("TurnOff:","True")
+                        ChessEvents.LastEvent = event  #Store the LastEvent variable here. 
                     else: 
                         GreenMoves, LegalMovesRefmt = GreenMoveScanner(tile_sequence[0], legal_moves)
                         if value in [GreenMoves[i] for i in range(len(GreenMoves))]: #if the 2nd tile is a legal move, allow it to be processed
@@ -145,7 +148,7 @@ def main():
                             tile_sequence = []
                 else:
                     PrintError("Opcode Error")
-                ChessEvents.LastEvent = event  #Store the LastEvent variable here. 
+                print(ChessEvents.LastEvent)
                 '''
                 AI Turn
                 '''

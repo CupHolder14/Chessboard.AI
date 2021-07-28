@@ -813,6 +813,7 @@ void ReadCurrentBoardState() {
         lcd.print("King is in Check!");
       }
       else if (operation == "TurnOff"){
+        ClearLine(3);
         ChangeState(LEDRowPins, true);
         ChangeState(LEDColPins_G, false);
         ChangeState(LEDColPins_R, false);

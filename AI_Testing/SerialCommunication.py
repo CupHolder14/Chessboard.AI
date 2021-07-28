@@ -52,7 +52,7 @@ def ReadTest(): #work in progress still
     
 def WriteSerial(OPCODE, DATA):
     thistime = time.time()
-    while thistime - lasttime <= 2:
+    while thistime - lasttime <= 3:
         thistime = time.time()
     serialport.write((OPCODE+DATA+'9').encode())
     globals()['lasttime'] = time.time()
