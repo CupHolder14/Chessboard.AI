@@ -732,6 +732,52 @@ void ChangeState(int *Array, bool state, int count = 8) {
   }
 }
 
+//void CheckLEDs(){
+//  if(operation == "LegalMoves"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],true,false);
+//          }
+//        }
+//      }
+//      if(operation == "IllegalMove"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],false,true);
+//          }
+//        }
+//      }
+//      if(operation == "AIMove"){
+//        for(int i = 0; i < 27; i++){
+//          if(rowMoves[i] != 9 and colMoves[i] != 9){
+//            TurnOnLEDs(rowMoves[i],colMoves[i],true,true);
+//          }
+//        }
+//      }
+//  if(operation == "LegalMoves"){
+//    if(opFlag){
+//      lcd.print("reset");
+//      ChangeState(LEDRowPins, true);
+//      ChangeState(LEDColPins_G, false);
+//      ChangeState(LEDColPins_R, false);
+//      opFlag = false;
+//    }
+//    digitalWrite(LEDRowPins[rowMoves[opIndex]], false);
+//    digitalWrite(LEDColPins_G[colMoves[opIndex]], true);
+//    lcd.print("tik");
+//    ChangeState(LEDRowPins, true);
+//    ChangeState(LEDColPins_G, false);
+//    opIndex = opIndex == 26 ? 0 : opIndex + 1;;
+//    lcd.print(String(opIndex));
+//  }
+//}
+
+
+
+
+
+///
+
 void ReadCurrentBoardState() {
   // iterate over the rows:
   for (int rowNow = 0; rowNow < 8; rowNow++) {
@@ -746,7 +792,6 @@ void ReadCurrentBoardState() {
             TurnOnLEDs(rowMoves[i], colMoves[i], true, false);
           }
         }
-        DisplayMessage("Marking Legal Moves");
       }
       else if (operation == "IllegalMove") {
         for (int i = 0; i < 27; i++) {
@@ -754,7 +799,6 @@ void ReadCurrentBoardState() {
             TurnOnLEDs(rowMoves[i], colMoves[i], false, true);
           }
         }
-        DisplayMessage("Illegal Move Spotted");
       }
       else if (operation == "AIMove"){
         for (int i = 0; i < 27; i++) {
@@ -762,18 +806,29 @@ void ReadCurrentBoardState() {
             TurnOnLEDs(rowMoves[i], colMoves[i], true , true);
           }
         }
-        DisplayMessage("AI Move Indicated");
       }
       else if (operation == "Check") {
-        DisplayMessage("King is in Check!");
+        ClearLine(3);
+        lcd.setCursor(0,3);
+        lcd.print("King is in Check!");
       }
       else if (operation == "TurnOff"){
-        ClearLine(3);
         ChangeState(LEDRowPins, true);
         ChangeState(LEDColPins_G, false);
         ChangeState(LEDColPins_R, false);
       }
+      
+      //      Serial.print(CurrentSensorBoardState[rowNow][colNow]);               // use this to access the values in serial monitor
+      //      if (CurrentSensorBoardState[rowNow][colNow] == 1) {
+      //        TurnOnLEDs(rowNow,colNow,true,false);
+      //        }
+    }
+    //Serial.println();
+  }
+  //Serial.println();
 }
+
+///
 
 
 
