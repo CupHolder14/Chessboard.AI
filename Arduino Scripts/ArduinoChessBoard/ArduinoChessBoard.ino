@@ -756,7 +756,7 @@ void ReadCurrentBoardState() {
         }
         DisplayMessage("Illegal Move Spotted");
       }
-      else if (operation == "AIMove"){
+      else if (operation == "AIMove") {
         for (int i = 0; i < 27; i++) {
           if (rowMoves[i] == rowNow and colMoves[i] == colNow) {
             TurnOnLEDs(rowMoves[i], colMoves[i], true , true);
@@ -767,15 +767,15 @@ void ReadCurrentBoardState() {
       else if (operation == "Check") {
         DisplayMessage("King is in Check!");
       }
-      else if (operation == "TurnOff"){
+      else if (operation == "TurnOff") {
         ClearLine(3);
         ChangeState(LEDRowPins, true);
         ChangeState(LEDColPins_G, false);
         ChangeState(LEDColPins_R, false);
       }
+    }
+  }
 }
-
-
 
 void CompareBoardStates() {
   String data;
@@ -795,46 +795,8 @@ void CompareBoardStates() {
   }
 }
 
-//void ParseRowCol(String content){
-//  char buff[210];
-//  content.toCharArray(buff,210);
-//  bool readData = false;
-//  int index1 = 0;
-//  int index2 = 0;
-//  for(int i = 0; i < 210; i++){
-//    if(buff[i] == '['){
-//      readData = true;
-//    }
-//    if(readData){
-//      if(buff[i] == ']'){
-//        readData = false;
-//        break;
-//      }
-//      else if(isDigit(buff[i])){
-//        int j = 9;
-//        j = buff[i].toInt();
-//        if (j != 9) {
-//          if (index2 % 2 == 0) {
-//            rowMoves[index1] = j;
-//            index2++;
-//          }
-//          else {
-//            colMoves[index1] = j;
-//            index++;
-//            index2++;
-//          }
-//          j = 9;
-//        }
-//        else {
-//          break;
-//        }
-//      }
-//    }
-//  }
-//}
-
-void WipeArrays(){
-  for(int i = 0; i < 27; i++){
+void WipeArrays() {
+  for (int i = 0; i < 27; i++) {
     rowMoves[i] = 9;
     colMoves[i] = 9;
   }
@@ -843,20 +805,20 @@ void WipeArrays(){
 void ParseTileData(String content) {
   WipeArrays();
   char buff[210];
-  content.toCharArray(buff,210);
+  content.toCharArray(buff, 210);
   bool readData = false;
   int index1 = 0;
   int index2 = 0;
-  for(int i = 0; i < 210; i++){
-    if(buff[i] == '['){
+  for (int i = 0; i < 210; i++) {
+    if (buff[i] == '[') {
       readData = true;
     }
-    if(readData){
-      if(buff[i] == ']'){
+    if (readData) {
+      if (buff[i] == ']') {
         readData = false;
         break;
       }
-      else if(isDigit(buff[i])){
+      else if (isDigit(buff[i])) {
         int j = 9;
         j = buff[i] - '0';
         if (j != 9) {
@@ -877,31 +839,6 @@ void ParseTileData(String content) {
       }
     }
   }
-  
-//  int j = 10;
-//  int index = 0;
-//  for (int i = 0; i < 54; i++) {
-//    j = Serial.parseInt();
-//    if (j != 9) {
-//      if (i % 2 == 0) {
-//        rowMoves[index] = j;
-//      }
-//      else {
-//        colMoves[index] = j;
-//        index++;
-//      }
-//      j = 10;
-//    }
-//    else {
-//      break;
-//    }
-//  }
-}
-
-void LEDScan(int indexes, bool isGreen, bool isRed) {
-  for (int i = 0; i < indexes; i++) {
-    TurnOnLEDs(rowMoves[i], colMoves[i], isGreen, isRed);
-  }
 }
 
 void ReceiveData() {
@@ -910,7 +847,7 @@ void ReceiveData() {
      If any data is avaliable check the Opcode sent and perform the required procedure
   */
   if (Serial.available() > 0) {
-    String content = Serial.readString();    //Store the Opcode and Value as a String into this  
+    String content = Serial.readString();    //Store the Opcode and Value as a String into this
     if (content.indexOf("LegalMoves:") >= 0) {
       operation = "LegalMoves";
       ParseTileData(content);
@@ -926,20 +863,20 @@ void ReceiveData() {
     else if (content.indexOf("Winner:") >= 0) {
       operation = "Winner";
       char buff[15];
-      content.toCharArray(buff,15);
+      content.toCharArray(buff, 15);
       bool readData = false;
-      for(int i = 0; i < 15; i++){
-        if(buff[i] == '['){
+      for (int i = 0; i < 15; i++) {
+        if (buff[i] == '[') {
           readData = true;
         }
-        if(readData){
-          if(buff[i] == ']'){
+        if (readData) {
+          if (buff[i] == ']') {
             readData = false;
             break;
           }
-          else{
-            if(isDigit(buff[i])){
-              lcd.setCursor(0,0);
+          else {
+            if (isDigit(buff[i])) {
+              lcd.setCursor(0, 0);
               settings.Winner = buff[i] - '0';
               break;
             }
@@ -947,15 +884,15 @@ void ReceiveData() {
         }
       }
       ClearLine(0);
-      if(settings.Winner == 0){
+      if (settings.Winner == 0) {
         lcd.setCursor(0, 0);
         lcd.print("Gameover-White Wins");
       }
-      else if(settings.Winner == 1){
+      else if (settings.Winner == 1) {
         lcd.setCursor(0, 0);
         lcd.print("Gameover-Black Wins");
       }
-      else if(settings.Winner == 2){
+      else if (settings.Winner == 2) {
         lcd.setCursor(0, 0);
         lcd.print("Gameover-Stalemate");
       }
@@ -969,7 +906,6 @@ void ReceiveData() {
     }
   }
 }
-
 
 void TurnOnLEDs(int row, int col, bool isGreen, bool isRed) {
   ChangeState(LEDRowPins, true);
@@ -1005,42 +941,44 @@ void CheckInitalization() {
         }
       }
     }
+  }
 
-    bool incorrectPlacement;
-    for (int rowNow = 0; rowNow < 8; rowNow++) {
-      if (rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7) {
-        ChangeState(sensorRowPins, false);                          // set all rows to low
-        digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
-        for (int colNow = 0; colNow < 8; colNow++) {
-          if (digitalRead(sensorColPins[colNow]) == 0) {
-            incorrectPlacement = true;
-            delay(100);
-            ClearLine(2);
-            lcd.setCursor(1, 2);
-            lcd.print("Incorrect Placement");
-            ClearLine(3);
-            lcd.setCursor(1, 3);
-            String s = String(rowNow);
-            String location = "At: (" + String(rowNow) + "," + String(colNow) + ")";
-            lcd.print(location);
-            ChangeState(LEDRowPins, true);
-            ChangeState(LEDColPins_G, false);
-            ChangeState(LEDColPins_R, false);
-            digitalWrite(LEDRowPins[rowNow], false);
-            digitalWrite(LEDColPins_R[colNow], true);
-            while (incorrectPlacement) {
-              if (digitalRead(sensorColPins[colNow]) == 1) {
-                incorrectPlacement = false;
-                ChangeState(LEDRowPins, true);
-                ChangeState(LEDColPins_G, false);
-                ChangeState(LEDColPins_R, false);
-              }
+
+  bool incorrectPlacement;
+  for (int rowNow = 0; rowNow < 8; rowNow++) {
+    if (rowNow == 0 || rowNow == 1 || rowNow == 6 || rowNow == 7) {
+      ChangeState(sensorRowPins, false);                          // set all rows to low
+      digitalWrite(sensorRowPins[rowNow], HIGH);                  // set rows HIGH one at a time to start scanning
+      for (int colNow = 0; colNow < 8; colNow++) {
+        if (digitalRead(sensorColPins[colNow]) == 0) {
+          incorrectPlacement = true;
+          delay(100);
+          ClearLine(2);
+          lcd.setCursor(1, 2);
+          lcd.print("Incorrect Placement");
+          ClearLine(3);
+          lcd.setCursor(1, 3);
+          String s = String(rowNow);
+          String location = "At: (" + String(rowNow) + "," + String(colNow) + ")";
+          lcd.print(location);
+          ChangeState(LEDRowPins, true);
+          ChangeState(LEDColPins_G, false);
+          ChangeState(LEDColPins_R, false);
+          digitalWrite(LEDRowPins[rowNow], false);
+          digitalWrite(LEDColPins_R[colNow], true);
+          while (incorrectPlacement) {
+            if (digitalRead(sensorColPins[colNow]) == 1) {
+              incorrectPlacement = false;
+              ChangeState(LEDRowPins, true);
+              ChangeState(LEDColPins_G, false);
+              ChangeState(LEDColPins_R, false);
             }
           }
         }
       }
     }
   }
+
   ClearLine(1);
   ClearLine(2);
   lcd.setCursor(1, 2);
@@ -1049,9 +987,6 @@ void CheckInitalization() {
   lcd.setCursor(1, 3);
   lcd.print("Hit Accept to Start");
 }
-
-
-
 /*
 
    Debugging Functions
