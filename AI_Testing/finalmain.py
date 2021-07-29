@@ -114,6 +114,7 @@ def main():
                         GreenMoves, LegalMovesRefmt = GreenMoveScanner(value, legal_moves)
                         if value in [LegalMovesRefmt[i][0] for i in range(len(LegalMovesRefmt))]: #If it was a legal move:
                             tile_sequence.append(value)
+                            print(GreenMoves)
                             SC.WriteSerial("LegalMoves:",str(GreenMoves)) #Sends a Green LED Opcode at those positions
                             print("Legal Piece " + str(tile_sequence))
                             ChessEvents.LastEvent = event  #Store the LastEvent variable here. 
@@ -250,6 +251,7 @@ def GreenMoveScanner(InitialTile, LegalMoves):
     for j in LegalMovesRefmt:
         if j[0] == InitialTile:
             GreenMoves.append(j[1])                      #All legal moves' second position
+    #print(GreenMoves)
     return GreenMoves, LegalMovesRefmt
 
 def PutBackDown(OriginalTile, WrongTile = None):

@@ -591,6 +591,15 @@ void loop() {
           break;
         case 3:
           CheckInitalization();
+          BlinkLEDs("Intersect");
+          BlinkLEDs("Intersect");
+          BlinkLEDs("Intersect");
+          BlinkLEDs("Intersect");
+          BlinkLEDs("Intersect");
+          BlinkLEDs("Intersect");
+          BlinkLEDs("RowByRow");
+          BlinkLEDs("RowByRow");
+          BlinkLEDs("RowByRow");
           settings.StartGame(settings.AgainstAI);
           currentMenu = 4;
           break;
@@ -732,6 +741,81 @@ void ChangeState(int *Array, bool state, int count = 8) {
   }
 }
 
+void BlinkLEDs(String Pattern){
+  /*
+   *  Asthetic LED interface
+   */
+
+  ChangeState(LEDRowPins, true);
+  ChangeState(LEDColPins_G, false);
+  ChangeState(LEDColPins_R, false);
+
+  if(Pattern == "RowByRow"){
+    ChangeState(LEDColPins_G, true);
+    for(int i = 0; i < 8; i++){
+      ChangeState(LEDRowPins, true);
+      digitalWrite(LEDRowPins[i], false);
+      delay(50);
+    }
+  }
+  
+  if(Pattern == "Intersect"){
+    ChangeState(LEDRowPins, false);
+  
+    bool Register_R[5] = {true, false, false, false, true};
+    bool Register_G[6] = {false, false, false, false, true, true};
+  
+    for(int i = 0; i < 6; i++){
+      digitalWrite(LEDColPins_R[0], Register_R[0]);
+      digitalWrite(LEDColPins_R[7], Register_R[0]);
+  
+      digitalWrite(LEDColPins_R[1], Register_R[1]);
+      digitalWrite(LEDColPins_R[6], Register_R[1]);
+  
+      digitalWrite(LEDColPins_R[2], Register_R[2]);
+      digitalWrite(LEDColPins_R[5], Register_R[2]);
+  
+      digitalWrite(LEDColPins_R[3], Register_R[3]);
+      digitalWrite(LEDColPins_R[4], Register_R[3]);
+  
+      digitalWrite(LEDColPins_G[0], Register_G[0]);
+      digitalWrite(LEDColPins_G[7], Register_G[0]);
+  
+      digitalWrite(LEDColPins_G[1], Register_G[1]);
+      digitalWrite(LEDColPins_G[6], Register_G[1]);
+  
+      digitalWrite(LEDColPins_G[2], Register_G[2]);
+      digitalWrite(LEDColPins_G[5], Register_G[2]);
+  
+      digitalWrite(LEDColPins_G[3], Register_G[3]);
+      digitalWrite(LEDColPins_G[4], Register_G[3]);
+      
+      bool buffr = Register_R[5];
+      Register_R[5] = Register_R[4];
+      Register_R[4] = Register_R[3];
+      Register_R[3] = Register_R[2];
+      Register_R[2] = Register_R[1];
+      Register_R[1] = Register_R[0];
+      Register_R[0] = buffr;
+  
+      buffr = Register_G[6];
+      Register_G[6] = Register_G[5];
+      Register_G[5] = Register_G[4];
+      Register_G[4] = Register_G[3];
+      Register_G[3] = Register_G[2];
+      Register_G[2] = Register_G[1];
+      Register_G[1] = Register_G[0];
+      Register_G[0] = buffr;
+      delay(50);
+    }
+  }
+  
+
+  ChangeState(LEDRowPins, true);
+  ChangeState(LEDColPins_G, false);
+  ChangeState(LEDColPins_R, false);
+}
+
 //void CheckLEDs(){
 //  if(operation == "LegalMoves"){
 //        for(int i = 0; i < 27; i++){
@@ -813,7 +897,6 @@ void ReadCurrentBoardState() {
         lcd.print("King is in Check!");
       }
       else if (operation == "TurnOff"){
-        ClearLine(3);
         ChangeState(LEDRowPins, true);
         ChangeState(LEDColPins_G, false);
         ChangeState(LEDColPins_R, false);

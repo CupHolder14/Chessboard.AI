@@ -127,20 +127,8 @@ def main():
                         selected_tile = (row,col)
                         tile_sequence.append(selected_tile) # If it was a unique click, we store that coordinate in a tuple
 
-                        '''GREEN MOVE SCANNER'''
-                        for i in legal_moves:
-                            #LAST SESSION HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            # FINISH THIS GREENMOVES LIST AND MOVE IT TO NEWMAIN.py
-                            if i.getChessNotation() not in legal_moves_refmt:
-                                legal_moves_refmt.append(i.getChessNotation()) #legal_moves_refmt is tripling the entries(for knights) is append wrong?
-                            #print(i.getChessNotation())
-                        for j in legal_moves_refmt:
-                            if j[0] == selected_tile:
-                                #print(j[0])
-                                #print(j[1])
-                                GreenMoves.append(j[1])
-                            #Send GreenMoves to Helen
-
+                        GreenMoves, LegalMovesRefmt = GreenMoveScanner(selected_tile, legal_moves)
+                        #print('green moves:'+str(GreenMoves))
 
                         #This converts the data into a list of all the row coordinates and a list of all of the col coordinates
                         # RTEST = [x[0] for x in GreenMoves]
@@ -237,6 +225,23 @@ def main():
 
         pygame.display.update() #This will update the UI after each event is made.
 
+def GreenMoveScanner(InitialTile, LegalMoves):
+    '''
+    Given an initial tile and a list of all legal moves, parse a list of all of the legal moves
+    '''
+    LegalMovesRefmt = []
+    GreenMoves = []
+    #print(LegalMoves[0].getChessNotation())
+    for i in LegalMoves:
+        if i.getChessNotation() not in LegalMovesRefmt:
+            LegalMovesRefmt.append(i.getChessNotation()) #All legal moves with respect to the initial tile
+    print(LegalMovesRefmt)
+    for j in LegalMovesRefmt:
+        if j[0] == InitialTile:
+            GreenMoves.append(j[1])                      #All legal moves' second position
+            print(j[1])
+    print(GreenMoves)
+    return GreenMoves, LegalMovesRefmt
 
 '''Standard Python convention for dealing with multiple scripts in one project. Main should be identified.'''
 if __name__ == "__main__":
